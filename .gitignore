@@ -1,0 +1,14 @@
+# Created by .ignore support plugin (hsz.mobi)
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+data/
+venv
+
+__pycache__/
+models/__pycache__/
+
+*.pt
