@@ -7,6 +7,7 @@ from model.positionwise import PositionWiseFeedForward
 
 class DecoderLayer(nn.Module):
     def __init__(self, params):
+        super(DecoderLayer, self).__init__()
         self.layer_norm = nn.LayerNorm(params.hidden_dim)
         self.self_attention = SelfAttention(params)
         self.encoder_attention = SelfAttention(params)
@@ -35,7 +36,7 @@ class Decoder(nn.Module):
         self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim)
         self.position_embedding = nn.Embedding(1000, params.hidden_dim)
 
-        self.layers = nn.ModuleList([DecoderLayer(params)] for _ in range(params.n_layer))
+        self.layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
 
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
         self.dropout = nn.Dropout(params.dropout)

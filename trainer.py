@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from model.transformer import Transformer
-from utils import init_weights, init_weights_gru, init_weights_attention, epoch_time
+from utils import epoch_time
 
 random.seed(32)
 torch.manual_seed(32)
@@ -53,22 +53,19 @@ class Trainer:
             for batch in self.train_iter:
                 # For each batch, first zero the gradients
                 self.optimizer.zero_grad()
-                sources, sources_lengths = batch.kor
-                targets = batch.eng
+                source = batch.kor
+                target = batch.eng
 
-                predictions = self.model(sources, sources_lengths, targets)
-                # targets     = [target length, batch size]
-                # predictions = [target length, batch size, output dim]
+                output = self.model(source, target[:, :-1])
+                # output = [batch size, target length - 1, output dim]
+                # target = [batch size, target length]
 
-                # flatten the ground-truth and predictions since CrossEntropyLoss takes 2D predictions with 1D targets
-                # +) in this process, we don't use 0-th token, since it is <sos> token
-                targets = targets[1:].view(-1)
-                predictions = predictions[1:].view(-1, predictions.shape[-1])
+                output = output.contiguous().view(-1, output.shape[-1])
+                target = target[:, :-1].contiguous().view(-1)
+                # output = [batch size * target length - 1, output dim]
+                # target = [batch size * target length - 1]
 
-                # targets = [(target sentence length - 1) * batch size]
-                # predictions = [(target sentence length - 1) * batch size, output dim]
-
-                loss = self.criterion(predictions, targets)
+                loss = self.criterion(output, target)
 
                 # clip the gradients to prevent the model from exploding gradient
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.params.clip)
@@ -101,16 +98,15 @@ class Trainer:
 
         with torch.no_grad():
             for batch in self.valid_iter:
-                sources, sources_lengths = batch.kor
-                targets = batch.eng
+                source = batch.kor
+                target = batch.eng
 
-                # when validates or test the model, we shouldn't use teacher forcing
-                predictions = self.model(sources, sources_lengths, targets, 0)
+                output = self.model(source, target[:, :-1])
 
-                predictions = predictions[1:].view(-1, predictions.shape[-1])
-                targets = targets[1:].view(-1)
+                output = output.contiguous().view(-1, output.shape[-1])
+                target = target[:, :-1].contiguous().view(-1)
 
-                loss = self.criterion(predictions, targets)
+                loss = self.criterion(output, target)
 
                 epoch_loss += loss.item()
 
@@ -124,15 +120,15 @@ class Trainer:
 
         with torch.no_grad():
             for batch in self.test_iter:
-                sources, sources_lengths = batch.kor
-                targets = batch.eng
+                source = batch.kor
+                target = batch.eng
 
-                predictions = self.model(sources, sources_lengths, targets, 0)
+                output = self.model(source, target[:, :-1])
 
-                predictions = predictions[1:].view(-1, predictions.shape[-1])
-                targets = targets[1:].view(-1)
+                output = output.contiguous().view(-1, output.shape[-1])
+                target = target[:, :-1].contiguous().view(-1)
 
-                loss = self.criterion(predictions, targets)
+                loss = self.criterion(output, target)
 
                 epoch_loss += loss.item()
 

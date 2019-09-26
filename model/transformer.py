@@ -38,7 +38,7 @@ class Transformer(nn.Module):
 
         source_mask, target_mask = self.create_mask(source, target)
 
-        source = self.encoder(source)
+        source = self.encoder(source, source_mask)
         output = self.decoder(target, source, target_mask, source_mask)
 
         return output

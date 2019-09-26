@@ -32,7 +32,7 @@ class Encoder(nn.Module):
         self.token_embedding = nn.Embedding(params.input_dim, params.hidden_dim)
         self.position_embedding = nn.Embedding(1000, params.hidden_dim)
 
-        self.layers = nn.ModuleList([EncoderLayer(params)] for _ in range(params.n_layer))
+        self.layers = nn.ModuleList([EncoderLayer(params) for _ in range(params.n_layer)])
 
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)

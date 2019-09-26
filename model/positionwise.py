@@ -6,7 +6,7 @@ class PositionWiseFeedForward(nn.Module):
     def __init__(self, params):
         super(PositionWiseFeedForward, self).__init__()
         self.conv1 = nn.Conv1d(params.hidden_dim, params.pf_dim, 1)
-        self.conv2 = nn.Conv2d(params.pf_dim, params.hidden_dim, 1)
+        self.conv2 = nn.Conv1d(params.pf_dim, params.hidden_dim, 1)
 
         self.dropout = nn.Dropout(params.dropout)
 

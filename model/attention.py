@@ -42,7 +42,7 @@ class SelfAttention(nn.Module):
         if mask is not None:
             pass
 
-        attention = self.dropout(F.softmax(energy), dim=-1)
+        attention = self.dropout(F.softmax(energy, dim=-1))
         # attention = [batch size, num head, source(or target) length, source(or target) length]
 
         x = torch.matmul(attention, v)
