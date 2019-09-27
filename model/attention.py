@@ -3,14 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class SelfAttention(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self, params):
-        super(SelfAttention, self).__init__()
+        super(MultiHeadAttention, self).__init__()
+        assert params.hidden_dim % params.n_head == 0
+
         self.device = params.device
         self.hidden_dim = params.hidden_dim
         self.n_head = params.n_head
-
-        assert params.hidden_dim % params.n_head == 0
 
         self.query_w = nn.Linear(self.hidden_dim, self.hidden_dim)
         self.key_w = nn.Linear(self.hidden_dim, self.hidden_dim)
@@ -19,8 +19,6 @@ class SelfAttention(nn.Module):
         self.fc = nn.Linear(self.hidden_dim, self.hidden_dim)
 
         self.dropout = nn.Dropout(params.dropout)
-
-        self.scale = torch.sqrt(torch.FloatTensor([self.hidden_dim // self.n_head])).to(self.device)
 
     def forward(self, query, key, value, mask=None):
         # query, key, value = [batch size, source(or target) length, hidden dim]
@@ -58,3 +56,46 @@ class SelfAttention(nn.Module):
         # x = [batch size, source(or target) length, hidden dim]
 
         return x
+
+
+class SelfAttention(nn.Module):
+    def __init__(self, params):
+        super(SelfAttention, self).__init__()
+
+        self.device = params.device
+        self.hidden_dim = params.hidden_dim
+        self.attention_dim = params.hidden_dim // self.n_head
+
+        self.q_w = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.k_w = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.v_w = nn.Linear(self.hidden_dim, self.hidden_dim)
+
+        self.dropout = nn.Dropout(params.dropout)
+
+        self.scale_factor = torch.sqrt(torch.FloatTensor([self.attention_dim])).to(self.device)
+
+    def forward(self, query, key, value, mask=None):
+        # query, key, value = [batch size, sentence length, hidden dim]
+
+        # create Q, K, V matrices using identical input sentence to calculate self-attention
+        q = self.q_w(query)
+        k = self.k_w(key)
+        v = self.v_w(value)
+        # q, k, v = [batch size, sentence length, hidden dim]
+
+        self_attention = torch.bmm(q, k.permute(0, 2, 1))
+        self_attention = self_attention / self.scale_factor
+        # self_attention = [batch size, sentence length, sentence length]
+
+        if mask is not None:
+            pass
+
+        # normalize attention score using soft max function based column
+        attention_score = self.dropout(F.softmax(self_attention, dim=2))
+        # attention_score = [batch size, sentence length, sentence length]
+
+        # compute weighted value matrix using attention score
+        weighted_v = torch.bmm(attention_score, v)
+        # weighted_v = [batch size, sentence length, attention dim]
+
+        return weighted_v
