@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from model.attention import SelfAttention
+from model.attention import MultiHeadAttention
 from model.positionwise import PositionWiseFeedForward
 
 
@@ -9,19 +9,20 @@ class EncoderLayer(nn.Module):
     def __init__(self, params):
         super(EncoderLayer, self).__init__()
         self.layer_norm = nn.LayerNorm(params.hidden_dim)
-        self.self_attention = SelfAttention(params)
-        self.position_wise_ffn = PositionWiseFeedForward(params)
 
-        self.dropout = nn.Dropout(params.dropout)
+        self.self_attention = MultiHeadAttention(params)
+        self.position_wise_ffn = PositionWiseFeedForward(params)
 
     def forward(self, source, source_mask):
         # source      = [batch size, source length, hidden dim]
         # source_mask = [batch size, source length]
 
-        source = self.layer_norm(source + self.dropout(self.self_attention(source, source, source, source_mask)))
-        source = self.layer_norm(source + self.dropout(self.position_wise_ffn(source)))
+        # Apply 'Add & Normalize' using nn.LayerNorm on self attention and Position wise Feed Forward Network
+        output = self.layer_norm(source + self.self_attention(source, source, source, source_mask))
+        output = self.layer_norm(output + self.position_wise_ffn(output))
+        # output = [batch size, source length, hidden dim]
 
-        return source
+        return output
 
 
 class Encoder(nn.Module):
@@ -42,9 +43,10 @@ class Encoder(nn.Module):
         # source_mask = [batch size, source length]
 
         # define positional encoding which encodes token's positional information
+        embedded = self.token_embedding(source)
         position = torch.arange(0, source.shape[1]).unsqueeze(0).repeat(source.shape[0], 1).to(self.device)
-        source = self.dropout(self.token_embedding(source) * self.scale) + self.position_embedding(position)
 
+        source = embedded + self.position_embedding(position)
         # source = [batch size, source length, hidden dim]
 
         for layer in self.layers:

@@ -1,9 +1,7 @@
 ## Transformer PyTorch implementation
-This repo contains Transformer implementation used to **translate Korean sentence into English sentence**.
+This repository contains Transformer implementation used to **translate Korean sentence into English sentence**.
 
 I used translation dataset, but you can apply these models to any sequence to sequence (i.e. text generation) tasks such as text summarization, response generation, ..., etc.
-
-All of base codes are based on this great [**seq2seq tutorial**](https://github.com/bentrevett/pytorch-seq2seq).
 
 In this project, I specially used Korean-English translation corpus from [**AI Hub**](http://www.aihub.or.kr/) to apply torchtext into Korean dataset. 
 
@@ -77,3 +75,10 @@ python main.py --model MODEL_NAME --mode test
 ```
 python predict.py --model MODEL_NAME --input "YOUR_KOREAN_INPUT"
 ```
+
+<br/>
+
+### References
+- [Transformer Official Implementation](https://github.com/tensorflow/models/tree/master/official/transformer)
+- [Jadore's PyTorch Implementation](https://github.com/jadore801120/attention-is-all-you-need-pytorch)
+- [Ben Trevett's Implementation](https://github.com/bentrevett/pytorch-seq2seq/blob/master/6%20-%20Attention%20is%20All%20You%20Need.ipynb)

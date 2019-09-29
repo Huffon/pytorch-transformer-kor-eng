@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from model.attention import SelfAttention
+from model.attention import MultiHeadAttention
 from model.positionwise import PositionWiseFeedForward
 
 
@@ -9,23 +9,26 @@ class DecoderLayer(nn.Module):
     def __init__(self, params):
         super(DecoderLayer, self).__init__()
         self.layer_norm = nn.LayerNorm(params.hidden_dim)
-        self.self_attention = SelfAttention(params)
-        self.encoder_attention = SelfAttention(params)
+
+        self.self_attention = MultiHeadAttention(params)
+        self.encoder_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
-        self.dropout = nn.Dropout(params.dropout)
-
-    def forward(self, target, source, target_mask, source_mask):
+    def forward(self, target, encoder_output, target_mask, source_mask):
         # target         = [batch size, target sentence length, hidden dim]
-        # source         = [batch size, source sentence length, hidden dim]
+        # encoder_output = [batch size, source sentence length, hidden dim]
         # target_mask    = [batch size, target sentence length]
         # source_mask    = [batch size, source sentence length]
 
-        target = self.layer_norm(target + self.dropout(self.self_attention(target, target, target, target_mask)))
-        target = self.layer_norm(target + self.dropout(self.encoder_attention(target, source, source, source_mask)))
-        target = self.layer_norm(target + self.dropout(self.position_wise_ffn(target)))
+        # Apply 'Add & Normalize' self attention, Encoder's Self attention and Position wise Feed Forward Network
+        output = self.layer_norm(target + self.self_attention(target, target, target, target_mask))
 
-        return target
+        # In Decoder stack, query is the output from below layer and key & value are the output from the Encoder
+        output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output, source_mask))
+        output = self.layer_norm(output + self.position_wise_ffn(output))
+        # output = [batch size, source length, hidden dim]
+
+        return output
 
 
 class Decoder(nn.Module):
