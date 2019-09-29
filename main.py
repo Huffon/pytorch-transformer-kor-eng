@@ -23,7 +23,7 @@ def main(config):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Transformer NMT')
+    parser = argparse.ArgumentParser(description='Transformer Neural Machine Translation')
 
     # Basic options
     parser.add_argument('--mode', type=str, default='train', choices=['train', 'test'])

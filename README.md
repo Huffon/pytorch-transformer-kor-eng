@@ -1,11 +1,11 @@
 ## Transformer PyTorch implementation
 This repository contains Transformer implementation used to **translate Korean sentence into English sentence**.
 
-I used translation dataset, but you can apply these models to any sequence to sequence (i.e. text generation) tasks such as text summarization, response generation, ..., etc.
+I used translation dataset for NMT, but you can apply this model to any sequence to sequence (i.e. text generation) tasks such as text summarization, response generation, ..., etc.
 
 In this project, I specially used Korean-English translation corpus from [**AI Hub**](http://www.aihub.or.kr/) to apply torchtext into Korean dataset. 
 
-I can not upload the used dataset because it requires an approval from AI Hub. You can get an approval from AI Hub, if you request it to admins.
+I can not upload the used dataset since it requires an approval from AI Hub. You can get an approval from AI Hub, if you request it to admins.
 
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
 It is really nice and easy to use, you should try if you handle Korean sentences :)

@@ -14,7 +14,7 @@
 
     "hidden_dim": 512,
     "feed_forward_dim": 2048,
-    "n_layer": 6,
+    "n_layer": 4,
     "n_head": 8,
     "dropout": 0.1
 }

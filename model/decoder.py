@@ -24,7 +24,7 @@ class DecoderLayer(nn.Module):
         output = self.layer_norm(target + self.self_attention(target, target, target, target_mask))
 
         # In Decoder stack, query is the output from below layer and key & value are the output from the Encoder
-        output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output, source_mask))
+        output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output))
         output = self.layer_norm(output + self.position_wise_ffn(output))
         # output = [batch size, source length, hidden dim]
 
@@ -39,7 +39,7 @@ class Decoder(nn.Module):
         self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim)
         self.position_embedding = nn.Embedding(1000, params.hidden_dim)
 
-        self.layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
+        self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
 
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
         self.dropout = nn.Dropout(params.dropout)
@@ -51,10 +51,17 @@ class Decoder(nn.Module):
         # target_mask    = [batch size, target sentence length]
         # source_mask    = [batch size, source sentence length]
 
+        # print(f'[D] Before embedding: {target.shape}')
+        embedded = self.token_embedding(target)
+        # print(f'[D] Before embedding: {embedded.shape}')
         position = torch.arange(0, target.shape[1]).unsqueeze(0).repeat(target.shape[0], 1).to(self.device)
-        target = self.dropout(self.token_embedding(target) * self.scale) + self.position_embedding(position)
 
-        for layer in self.layers:
-            target = layer(target, source, target_mask, source_mask)
+        target = self.dropout(embedded + self.position_embedding(position))
 
-        return self.fc(target)
+        for decoder_layer in self.decoder_layers:
+            target = decoder_layer(target, source, target_mask, source_mask)
+        # print(f'[D] After decoding: {target.shape}')
+        output = self.fc(target)
+        # print(f'[D] After predicting: {output.shape}')
+        # print('------------------------------------------------------------')
+        return output

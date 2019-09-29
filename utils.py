@@ -160,6 +160,10 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 
+def encode_position(length):
+    pass
+
+
 class Params:
     """
     Class that loads hyperparameters from a json file

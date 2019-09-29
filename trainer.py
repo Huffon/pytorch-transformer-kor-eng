@@ -45,6 +45,7 @@ class Trainer:
         print(self.model)
 
         for epoch in range(self.params.num_epoch):
+        # for epoch in range(1):
             self.model.train()
 
             epoch_loss = 0
@@ -54,17 +55,24 @@ class Trainer:
                 # For each batch, first zero the gradients
                 self.optimizer.zero_grad()
                 source = batch.kor
+                # source = torch.tensor([[60, 1837, 7, 189,  608, 8756, 393, 3819, 64, 16496, 6, 1]]).to('cuda')
                 target = batch.eng
+                # print(f'Source is\n {source} and has {source.shape}, \ntarget is\n {target} and has {target.shape}')
 
+                # target sentence consists of <sos> and following tokens except the <eos> token
                 output = self.model(source, target[:, :-1])
                 # output = [batch size, target length - 1, output dim]
                 # target = [batch size, target length]
 
-                output = output.contiguous().view(-1, output.shape[-1])
-                target = target[:, :-1].contiguous().view(-1)
-                # output = [batch size * target length - 1, output dim]
-                # target = [batch size * target length - 1]
+                # output_max = torch.argmax(output.squeeze(0), -1)
+                # print(f'[Predicted value]\n: {output_max}')
+                # print(f'[Ground truth]\n: {target[:, 1:]}')
 
+                # ground sentence consists of tokens and <eos> token except the <sos> token
+                output = output.contiguous().view(-1, output.shape[-1])
+                target = target[:, 1:].contiguous().view(-1)
+                # output = [(batch size * target length - 1), output dim]
+                # target = [(batch size * target length - 1)]
                 loss = self.criterion(output, target)
 
                 # clip the gradients to prevent the model from exploding gradient

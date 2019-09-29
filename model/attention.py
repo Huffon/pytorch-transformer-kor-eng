@@ -8,16 +8,16 @@ class MultiHeadAttention(nn.Module):
         super(MultiHeadAttention, self).__init__()
         assert params.hidden_dim % params.n_head == 0
 
-        self.attentions = nn.ModuleList([SelfAttention(params) for _ in params.n_head])
+        self.attentions = nn.ModuleList([SelfAttention(params) for _ in range(params.n_head)])
 
-        self.o_w = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.o_w = nn.Linear(params.hidden_dim, params.hidden_dim)
 
         self.dropout = nn.Dropout(params.dropout)
 
-    def forward(self, query, key, value):
+    def forward(self, query, key, value, mask=None):
         # query, key, value = [batch size, sentence length, hidden dim]
 
-        weighted_vs = [attention(query, key, value) for attention in self.attentions]
+        weighted_vs = [attention(query, key, value, mask) for attention in self.attentions]
         # weighted_vs = [batch size, sentence length, attention dim] * num head
 
         weighted_v = torch.cat(weighted_vs, dim=2)
@@ -59,7 +59,7 @@ class SelfAttention(nn.Module):
         # self_attention = [batch size, sentence length, sentence length]
 
         if mask is not None:
-            pass
+            self_attention = self_attention.masked_fill(mask, -1e10)
 
         # normalize self attention score by applying soft max function on each row
         attention_score = self.dropout(F.softmax(self_attention, dim=2))

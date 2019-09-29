@@ -9,26 +9,54 @@ class Transformer(nn.Module):
     def __init__(self, params):
         super(Transformer, self).__init__()
         self.params = params
+        self.device = params.device
         self.encoder = Encoder(params)
         self.decoder = Decoder(params)
 
-    def create_mask(self, source, target):
-        # source = [batch size, source length]
+    def create_subsequent_mask(self, target):
         # target = [batch size, target length]
 
-        source_mask = (source != self.params.pad_idx).unsqueeze(1).unsqueeze(2)
-        target_pad_mask = (target != self.params.pad_idx).unsqueeze(1).unsqueeze(3)
+        batch_size, target_length = target.size()
 
-        # source_mask     = [batch size, 1, 1, source length]
-        # target_pad_mask = [batch size, 1, target length, 1]
+        # torch.triu returns the upper triangular part of a matrix based on user defined diagonal
+        '''
+        if target length is 5 and diagonal is 1, this function returns
+            [[0, 1, 1, 1, 1],
+             [0, 0, 1, 1, 1],
+             [0, 0, 0, 1, 1],
+             [0, 0, 0, 0, 1],
+             [0, 0, 0, 0, 1]]
+        '''
+        subsequent_mask = torch.triu(torch.ones(target_length, target_length), diagonal=1).bool().to(self.device)
+        # subsequent_mask = [target length, target length]
 
-        target_len = target.shape[1]
+        # clone subsequent mask 'batch size' times to cover all data instances in the batch
+        subsequent_mask = subsequent_mask.unsqueeze(0).repeat(batch_size, 1, 1)
+        # subsequent_mask = [batch size, target length, target length]
 
-        target_sub_mask = torch.tril(torch.ones((target_len, target_len), device=self.params.device)).bool()
-        # target_sub_mask = [target length, target length]
+        return subsequent_mask
 
-        target_mask = target_pad_mask & target_sub_mask
-        # target_mask [batch size, 1, target length, target length]
+    def create_mask(self, source, target, target_mask):
+        # source      = [batch size, source length]
+        # target      = [batch size, target length]
+        # target mask = [batch size, target length, target length]
+        source_length = source.shape[1]
+        target_length = target.shape[1]
+
+        # create boolean tensors used to mask padding tokens
+        source_mask = (source == self.params.pad_idx)
+        target_pad_mask = (target == self.params.pad_idx)
+        # source mask     = [batch size, source length]
+        # target pad mask = [batch size, target length]
+
+        source_mask = source_mask.unsqueeze(1).repeat(1, source_length, 1)
+        target_pad_mask = target_pad_mask.unsqueeze(1).repeat(1, target_length, 1)
+        # source mask     = [batch size, source length, source length]
+        # target pad mask = [batch size, target length, target length]
+
+        # add padding token mask and subsequent mask for training target sentence
+        target_mask = target_pad_mask | target_mask
+        # target_mask [batch size, target length, target length]
 
         return source_mask, target_mask
 
@@ -36,7 +64,8 @@ class Transformer(nn.Module):
         # source = [batch size, source length]
         # target = [batch size, target length]
 
-        source_mask, target_mask = self.create_mask(source, target)
+        target_mask = self.create_subsequent_mask(target)
+        source_mask, target_mask = self.create_mask(source, target, target_mask)
 
         source = self.encoder(source, source_mask)
         output = self.decoder(target, source, target_mask, source_mask)
