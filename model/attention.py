@@ -12,50 +12,25 @@ class MultiHeadAttention(nn.Module):
         self.hidden_dim = params.hidden_dim
         self.n_head = params.n_head
 
-        self.query_w = nn.Linear(self.hidden_dim, self.hidden_dim)
-        self.key_w = nn.Linear(self.hidden_dim, self.hidden_dim)
-        self.value_w = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.attentions = nn.ModuleList([SelfAttention(params) for _ in self.n_head])
 
-        self.fc = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.o_w = nn.Linear(self.hidden_dim, self.hidden_dim)
 
         self.dropout = nn.Dropout(params.dropout)
 
-    def forward(self, query, key, value, mask=None):
-        # query, key, value = [batch size, source(or target) length, hidden dim]
-        batch_size = query.shape[0]
+    def forward(self, query, key, value):
+        # query, key, value = [batch size, sentence length, hidden dim]
 
-        q = self.query_w(query)
-        k = self.key_w(key)
-        v = self.value_w(value)
-        # q, k, v = [batch size, source(or target) length, hidden dim]
+        weighted_v = [attention(query, key, value) for attention in self.attentions]
+        # weighted_v = [batch size, sentence length, attention dim] * num head
 
-        q = q.view(batch_size, -1, self.n_head, self.hidden_dim // self.n_head).permute(0, 2, 1, 3)
-        k = k.view(batch_size, -1, self.n_head, self.hidden_dim // self.n_head).permute(0, 2, 1, 3)
-        v = v.view(batch_size, -1, self.n_head, self.hidden_dim // self.n_head).permute(0, 2, 1, 3)
-        # q, k, v = [batch size, num head, source(or target) length, hidden dim // num head]
+        weighted_v = torch.cat(weighted_v, dim=2)
+        # weighted_v = [batch size, sentence length, hidden dim]
 
-        energy = torch.matmul(q, k.permute(0, 1, 3, 2)) / self.scale
-        # energy = [batch size, num head, source(or target) length, source(or target) length]
+        output = nn.Linear(weighted_v)
+        # output = [batch size, sentence length, hidden dim]
 
-        if mask is not None:
-            pass
-
-        attention = self.dropout(F.softmax(energy, dim=-1))
-        # attention = [batch size, num head, source(or target) length, source(or target) length]
-
-        x = torch.matmul(attention, v)
-        # x = [batch size, num head, source(or target) length, hidden dim // num head]
-
-        x = x.permute(0, 2, 1, 3).contiguous()
-        # x = [batch size, source(or target) length, num head, hidden dim // num head]
-
-        x = x.view(batch_size, -1, self.n_head * (self.hidden_dim // self.n_head))
-        # x = [batch size, source(or target) length, hidden dim]
-
-        x = self.fc(x)
-        # x = [batch size, source(or target) length, hidden dim]
-
-        return x
+        return output
 
 
 class SelfAttention(nn.Module):
@@ -66,9 +41,9 @@ class SelfAttention(nn.Module):
         self.hidden_dim = params.hidden_dim
         self.attention_dim = params.hidden_dim // self.n_head
 
-        self.q_w = nn.Linear(self.hidden_dim, self.hidden_dim)
-        self.k_w = nn.Linear(self.hidden_dim, self.hidden_dim)
-        self.v_w = nn.Linear(self.hidden_dim, self.hidden_dim)
+        self.q_w = nn.Linear(self.hidden_dim, self.attention_dim)
+        self.k_w = nn.Linear(self.hidden_dim, self.attention_dim)
+        self.v_w = nn.Linear(self.hidden_dim, self.attention_dim)
 
         self.dropout = nn.Dropout(params.dropout)
 
@@ -81,7 +56,7 @@ class SelfAttention(nn.Module):
         q = self.q_w(query)
         k = self.k_w(key)
         v = self.v_w(value)
-        # q, k, v = [batch size, sentence length, hidden dim]
+        # q, k, v = [batch size, sentence length, attention dim]
 
         self_attention = torch.bmm(q, k.permute(0, 2, 1))
         self_attention = self_attention / self.scale_factor
