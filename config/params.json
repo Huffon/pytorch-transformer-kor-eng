@@ -13,7 +13,7 @@
     "num_epoch": 10,
 
     "hidden_dim": 512,
-    "pf_dim": 2048,
+    "feed_forward_dim": 2048,
     "n_layer": 6,
     "n_head": 8,
     "dropout": 0.1
