@@ -36,28 +36,31 @@ class Transformer(nn.Module):
 
         return subsequent_mask
 
-    def create_mask(self, source, target, target_mask):
-        # source      = [batch size, source length]
-        # target      = [batch size, target length]
-        # target mask = [batch size, target length, target length]
+    def create_mask(self, source, target, subsequent_mask):
+        # source          = [batch size, source length]
+        # target          = [batch size, target length]
+        # subsequent_mask = [batch size, target length, target length]
         source_length = source.shape[1]
         target_length = target.shape[1]
 
-        # create boolean tensors used to mask padding tokens
+        # create boolean tensors which will be used to mask padding tokens of both source and target sentence
         source_mask = (source == self.params.pad_idx)
-        target_pad_mask = (target == self.params.pad_idx)
-        # source mask     = [batch size, source length]
-        # target pad mask = [batch size, target length]
+        target_mask = (target == self.params.pad_idx)
+        # source mask    = [batch size, source length]
+        # target mask    = [batch size, target length]
 
-        dec_enc_mask = source.mask.unsqueeze(1).repeat(1, target_length, 1)
+        # repeat source sentence masking tensor 'target sentence length' times: dec_enc_mask
+        dec_enc_mask = source_mask.unsqueeze(1).repeat(1, target_length, 1)
+        # repeat source sentence masking tensor 'source sentence length' times: source_mask
         source_mask = source_mask.unsqueeze(1).repeat(1, source_length, 1)
-        target_pad_mask = target_pad_mask.unsqueeze(1).repeat(1, target_length, 1)
-        # dec enc mask    = [batch size, target length, source length]
-        # source mask     = [batch size, source length, source length]
-        # target pad mask = [batch size, target length, target length]
+        # repeat target sentence masking tensor 'target sentence length' times: target_mask
+        target_mask = target_mask.unsqueeze(1).repeat(1, target_length, 1)
+        # dec enc mask   = [batch size, target length, source length]
+        # source mask    = [batch size, source length, source length]
+        # target mask    = [batch size, target length, target length]
 
-        # add padding token mask and subsequent mask for training target sentence
-        target_mask = target_pad_mask | target_mask
+        # combine pad token masking tensor and subsequent masking tensor for decoder's self attention
+        target_mask = target_mask | subsequent_mask
         # target mask = [batch size, target length, target length]
 
         return source_mask, target_mask, dec_enc_mask
@@ -66,11 +69,13 @@ class Transformer(nn.Module):
         # source = [batch size, source length]
         # target = [batch size, target length]
 
-        target_mask = self.create_subsequent_mask(target)
-        source_mask, target_mask, dec_enc_mask = self.create_mask(source, target, target_mask)
+        # create masking tensor for self attention (encoder & decoder) and decoder's attention on the output of encoder
+        subsequent_mask = self.create_subsequent_mask(target)
+        source_mask, target_mask, dec_enc_mask = self.create_mask(source, target, subsequent_mask)
 
         source = self.encoder(source, source_mask)
         output = self.decoder(target, source, target_mask, dec_enc_mask)
+        # output = [batch size, target length, output dim]
 
         return output
 
