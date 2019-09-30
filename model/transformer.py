@@ -49,26 +49,28 @@ class Transformer(nn.Module):
         # source mask     = [batch size, source length]
         # target pad mask = [batch size, target length]
 
+        dec_enc_mask = source.mask.unsqueeze(1).repeat(1, target_length, 1)
         source_mask = source_mask.unsqueeze(1).repeat(1, source_length, 1)
         target_pad_mask = target_pad_mask.unsqueeze(1).repeat(1, target_length, 1)
+        # dec enc mask    = [batch size, target length, source length]
         # source mask     = [batch size, source length, source length]
         # target pad mask = [batch size, target length, target length]
 
         # add padding token mask and subsequent mask for training target sentence
         target_mask = target_pad_mask | target_mask
-        # target_mask [batch size, target length, target length]
+        # target mask = [batch size, target length, target length]
 
-        return source_mask, target_mask
+        return source_mask, target_mask, dec_enc_mask
 
     def forward(self, source, target):
         # source = [batch size, source length]
         # target = [batch size, target length]
 
         target_mask = self.create_subsequent_mask(target)
-        source_mask, target_mask = self.create_mask(source, target, target_mask)
+        source_mask, target_mask, dec_enc_mask = self.create_mask(source, target, target_mask)
 
         source = self.encoder(source, source_mask)
-        output = self.decoder(target, source, target_mask, source_mask)
+        output = self.decoder(target, source, target_mask, dec_enc_mask)
 
         return output
 

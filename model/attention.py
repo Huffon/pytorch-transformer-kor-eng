@@ -62,7 +62,7 @@ class SelfAttention(nn.Module):
             self_attention = self_attention.masked_fill(mask, -1e10)
 
         # normalize self attention score by applying soft max function on each row
-        attention_score = self.dropout(F.softmax(self_attention, dim=2))
+        attention_score = self.dropout(F.softmax(self_attention, dim=-1))
         # attention_score = [batch size, sentence length, sentence length]
 
         # compute "weighted" value matrix using self attention score and V matrix

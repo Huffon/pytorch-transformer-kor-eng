@@ -15,7 +15,7 @@ class EncoderLayer(nn.Module):
 
     def forward(self, source, source_mask):
         # source      = [batch size, source length, hidden dim]
-        # source_mask = [batch size, source length]
+        # source_mask = [batch size, source length, source length]
 
         # Apply 'Add & Normalize' using nn.LayerNorm on self attention and Position wise Feed Forward Network
         output = self.layer_norm(source + self.self_attention(source, source, source, source_mask))
@@ -40,7 +40,7 @@ class Encoder(nn.Module):
 
     def forward(self, source, source_mask):
         # source      = [batch size, source length]
-        # source_mask = [batch size, source length]
+        # source_mask = [batch size, source length, source length]
 
         # define positional encoding which encodes token's positional information
         # print(f'[E] Before embedding: {source.shape}')
@@ -53,7 +53,7 @@ class Encoder(nn.Module):
 
         for encoder_layer in self.encoder_layers:
             source = encoder_layer(source, source_mask)
-
+        # source = [batch size, source length, hidden dim]
         # print(f'[E] After encoding: {source.shape}')
         # print('------------------------------------------------------------')
         return source

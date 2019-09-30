@@ -112,7 +112,7 @@ class Trainer:
                 output = self.model(source, target[:, :-1])
 
                 output = output.contiguous().view(-1, output.shape[-1])
-                target = target[:, :-1].contiguous().view(-1)
+                target = target[:, 1:].contiguous().view(-1)
 
                 loss = self.criterion(output, target)
 
@@ -134,7 +134,7 @@ class Trainer:
                 output = self.model(source, target[:, :-1])
 
                 output = output.contiguous().view(-1, output.shape[-1])
-                target = target[:, :-1].contiguous().view(-1)
+                target = target[:, 1:].contiguous().view(-1)
 
                 loss = self.criterion(output, target)
 

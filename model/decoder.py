@@ -14,19 +14,19 @@ class DecoderLayer(nn.Module):
         self.encoder_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
-    def forward(self, target, encoder_output, target_mask, source_mask):
-        # target         = [batch size, target sentence length, hidden dim]
-        # encoder_output = [batch size, source sentence length, hidden dim]
-        # target_mask    = [batch size, target sentence length]
-        # source_mask    = [batch size, source sentence length]
+    def forward(self, target, encoder_output, target_mask, dec_enc_mask):
+        # target          = [batch size, target sentence length, hidden dim]
+        # encoder_output  = [batch size, source sentence length, hidden dim]
+        # target_mask     = [batch size, target sentence length, target sentence length]
+        # dec_enc_mask    = [batch size, target sentence length, source sentence length]
 
         # Apply 'Add & Normalize' self attention, Encoder's Self attention and Position wise Feed Forward Network
         output = self.layer_norm(target + self.self_attention(target, target, target, target_mask))
 
         # In Decoder stack, query is the output from below layer and key & value are the output from the Encoder
-        output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output))
+        output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output, dec_enc_mask))
         output = self.layer_norm(output + self.position_wise_ffn(output))
-        # output = [batch size, source length, hidden dim]
+        # output = [batch size, target length, hidden dim]
 
         return output
 
@@ -45,11 +45,11 @@ class Decoder(nn.Module):
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, target, source, target_mask, source_mask):
-        # target         = [batch size, target sentence length]
-        # source         = [batch size, source sentence length]
-        # target_mask    = [batch size, target sentence length]
-        # source_mask    = [batch size, source sentence length]
+    def forward(self, target, source, target_mask, dec_enc_mask):
+        # target          = [batch size, target sentence length]
+        # source          = [batch size, source sentence length]
+        # target_mask     = [batch size, target sentence length, target sentence length]
+        # dec_enc_mask    = [batch size, target sentence length, source sentence length]
 
         # print(f'[D] Before embedding: {target.shape}')
         embedded = self.token_embedding(target)
@@ -59,9 +59,11 @@ class Decoder(nn.Module):
         target = self.dropout(embedded + self.position_embedding(position))
 
         for decoder_layer in self.decoder_layers:
-            target = decoder_layer(target, source, target_mask, source_mask)
+            target = decoder_layer(target, source, target_mask, dec_enc_mask)
+        # target = [batch size, target length, hidden dim]
         # print(f'[D] After decoding: {target.shape}')
         output = self.fc(target)
+        # output = [batch size, target length, output dim]
         # print(f'[D] After predicting: {output.shape}')
         # print('------------------------------------------------------------')
         return output
