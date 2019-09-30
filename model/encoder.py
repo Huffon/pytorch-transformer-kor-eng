@@ -31,24 +31,21 @@ class Encoder(nn.Module):
         self.device = params.device
 
         self.token_embedding = nn.Embedding(params.input_dim, params.hidden_dim)
-        self.position_embedding = nn.Embedding(1000, params.hidden_dim)
-
         self.encoder_layers = nn.ModuleList([EncoderLayer(params) for _ in range(params.n_layer)])
-
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, source, source_mask):
-        # source      = [batch size, source length]
-        # source_mask = [batch size, source length, source length]
+    def forward(self, source, source_mask, positional_encoding):
+        # source              = [batch size, source length]
+        # source mask         = [batch size, source length, source length]
+        # positional encoding = [batch size, source length, hidden dim]
 
         # define positional encoding which encodes token's positional information
         # print(f'[E] Before embedding: {source.shape}')
         embedded = self.token_embedding(source)
         # print(f'[E] After embedding: {embedded.shape}')
-        position = torch.arange(0, source.shape[1]).unsqueeze(0).repeat(source.shape[0], 1).to(self.device)
 
-        source = self.dropout(embedded + self.position_embedding(position))
+        source = self.dropout(embedded + positional_encoding)
         # source = [batch size, source length, hidden dim]
 
         for encoder_layer in self.encoder_layers:

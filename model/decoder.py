@@ -37,26 +37,26 @@ class Decoder(nn.Module):
         self.device = params.device
 
         self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim)
-        self.position_embedding = nn.Embedding(1000, params.hidden_dim)
-
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
-
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
+
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, target, source, target_mask, dec_enc_mask):
-        # target          = [batch size, target sentence length]
-        # source          = [batch size, source sentence length]
-        # target_mask     = [batch size, target sentence length, target sentence length]
-        # dec_enc_mask    = [batch size, target sentence length, source sentence length]
+    def forward(self, target, source, target_mask, dec_enc_mask, positional_encoding):
+        # target              = [batch size, target length]
+        # source              = [batch size, source length]
+
+        # target mask         = [batch size, target length, target length]
+        # dec enc mask        = [batch size, target length, source length]
+
+        # positional encoding = [batch size, target length, hidden dim]
 
         # print(f'[D] Before embedding: {target.shape}')
         embedded = self.token_embedding(target)
         # print(f'[D] Before embedding: {embedded.shape}')
-        position = torch.arange(0, target.shape[1]).unsqueeze(0).repeat(target.shape[0], 1).to(self.device)
 
-        target = self.dropout(embedded + self.position_embedding(position))
+        target = self.dropout(embedded + positional_encoding)
 
         for decoder_layer in self.decoder_layers:
             target = decoder_layer(target, source, target_mask, dec_enc_mask)

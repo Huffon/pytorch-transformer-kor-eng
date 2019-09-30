@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -9,6 +10,8 @@ class Transformer(nn.Module):
     def __init__(self, params):
         super(Transformer, self).__init__()
         self.params = params
+        self.hidden_dim = params.hidden_dim
+
         self.device = params.device
         self.encoder = Encoder(params)
         self.decoder = Decoder(params)
@@ -65,16 +68,40 @@ class Transformer(nn.Module):
 
         return source_mask, target_mask, dec_enc_mask
 
+    def create_positional_encoding(self, batch_size, sentence_len):
+        sinusoid_table = np.array([pos/np.power(10000, 2*i/self.hidden_dim)
+                                   for pos in range(sentence_len) for i in range(self.hidden_dim)])
+        # sinusoid table = [sentence length * hidden dim]
+
+        sinusoid_table = sinusoid_table.reshape(sentence_len, -1)
+        # sinusoid table = [sentence length, hidden dim]
+
+        # get positional encoding for even numbers
+        sinusoid_table[0::2, :] = np.sin(sinusoid_table[0::2, :])
+        # get positional encoding for odd numbers
+        sinusoid_table[1::2, :] = np.sin(sinusoid_table[1::2, :])
+        sinusoid_table = torch.FloatTensor(sinusoid_table).to(self.device)
+
+        sinusoid_table = sinusoid_table.unsqueeze(0).repeat(batch_size, 1, 1)
+        # sinusoid table = [batch size, sentence length, hidden dim]
+
+        return sinusoid_table
+
     def forward(self, source, target):
         # source = [batch size, source length]
         # target = [batch size, target length]
+        source_batch, source_len = source.size()
+        target_batch, target_len = target.size()
 
         # create masking tensor for self attention (encoder & decoder) and decoder's attention on the output of encoder
         subsequent_mask = self.create_subsequent_mask(target)
         source_mask, target_mask, dec_enc_mask = self.create_mask(source, target, subsequent_mask)
 
-        source = self.encoder(source, source_mask)
-        output = self.decoder(target, source, target_mask, dec_enc_mask)
+        source_positional_encoding = self.create_positional_encoding(source_batch, source_len)
+        target_positional_encoding = self.create_positional_encoding(target_batch, target_len)
+
+        source = self.encoder(source, source_mask, source_positional_encoding)
+        output = self.decoder(target, source, target_mask, dec_enc_mask, target_positional_encoding)
         # output = [batch size, target length, output dim]
 
         return output
