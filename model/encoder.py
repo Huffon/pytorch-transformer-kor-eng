@@ -13,13 +13,17 @@ class EncoderLayer(nn.Module):
         self.self_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
-    def forward(self, source, source_mask):
+    def forward(self, source, source_mask, source_non_pad):
         # source      = [batch size, source length, hidden dim]
         # source_mask = [batch size, source length, source length]
+        # source_non_pad      = [batch size, source length, 1]
 
         # Apply 'Add & Normalize' using nn.LayerNorm on self attention and Position wise Feed Forward Network
         output = self.layer_norm(source + self.self_attention(source, source, source, source_mask))
+        output = output * source_non_pad
+
         output = self.layer_norm(output + self.position_wise_ffn(output))
+        output = output * source_non_pad
         # output = [batch size, source length, hidden dim]
 
         return output
@@ -35,10 +39,11 @@ class Encoder(nn.Module):
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, source, source_mask, positional_encoding):
+    def forward(self, source, source_mask, positional_encoding, source_non_pad):
         # source              = [batch size, source length]
         # source mask         = [batch size, source length, source length]
         # positional encoding = [batch size, source length, hidden dim]
+        # source_non_pad      = [batch size, source length, 1]
 
         # define positional encoding which encodes token's positional information
         # print(f'[E] Before embedding: {source.shape}')
@@ -49,7 +54,7 @@ class Encoder(nn.Module):
         # source = [batch size, source length, hidden dim]
 
         for encoder_layer in self.encoder_layers:
-            source = encoder_layer(source, source_mask)
+            source = encoder_layer(source, source_mask, source_non_pad)
         # source = [batch size, source length, hidden dim]
         # print(f'[E] After encoding: {source.shape}')
         # print('------------------------------------------------------------')

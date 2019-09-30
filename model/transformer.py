@@ -10,6 +10,7 @@ class Transformer(nn.Module):
     def __init__(self, params):
         super(Transformer, self).__init__()
         self.params = params
+        self.pad_idx = params.pad_idx
         self.hidden_dim = params.hidden_dim
 
         self.device = params.device
@@ -20,8 +21,6 @@ class Transformer(nn.Module):
         # target = [batch size, target length]
 
         batch_size, target_length = target.size()
-
-        # torch.triu returns the upper triangular part of a matrix based on user defined diagonal
         '''
         if target length is 5 and diagonal is 1, this function returns
             [[0, 1, 1, 1, 1],
@@ -30,10 +29,11 @@ class Transformer(nn.Module):
              [0, 0, 0, 0, 1],
              [0, 0, 0, 0, 1]]
         '''
+        # torch.triu returns the upper triangular part of a matrix based on user defined diagonal
         subsequent_mask = torch.triu(torch.ones(target_length, target_length), diagonal=1).bool().to(self.device)
         # subsequent_mask = [target length, target length]
 
-        # clone subsequent mask 'batch size' times to cover all data instances in the batch
+        # repeat subsequent mask 'batch size' times to cover all data instances in the batch
         subsequent_mask = subsequent_mask.unsqueeze(0).repeat(batch_size, 1, 1)
         # subsequent_mask = [batch size, target length, target length]
 
@@ -47,8 +47,8 @@ class Transformer(nn.Module):
         target_length = target.shape[1]
 
         # create boolean tensors which will be used to mask padding tokens of both source and target sentence
-        source_mask = (source == self.params.pad_idx)
-        target_mask = (target == self.params.pad_idx)
+        source_mask = (source == self.pad_idx)
+        target_mask = (target == self.pad_idx)
         # source mask    = [batch size, source length]
         # target mask    = [batch size, target length]
         '''
@@ -57,23 +57,25 @@ class Transformer(nn.Module):
         
         masking tensor will be [False, False, False, False, False, True, True, True, False]
         '''
-
-        # repeat source sentence masking tensor 'target sentence length' times: dec_enc_mask
+        # repeat sentence masking tensors 'sentence length' times
         dec_enc_mask = source_mask.unsqueeze(1).repeat(1, target_length, 1)
-        # repeat source sentence masking tensor 'source sentence length' times: source_mask
         source_mask = source_mask.unsqueeze(1).repeat(1, source_length, 1)
-        # repeat target sentence masking tensor 'target sentence length' times: target_mask
         target_mask = target_mask.unsqueeze(1).repeat(1, target_length, 1)
 
-        # dec enc mask   = [batch size, target length, source length]
         # source mask    = [batch size, source length, source length]
         # target mask    = [batch size, target length, target length]
+        # dec_enc_mask   = [batch size, target length, source length]
 
         # combine pad token masking tensor and subsequent masking tensor for decoder's self attention
         target_mask = target_mask | subsequent_mask
         # target mask = [batch size, target length, target length]
 
         return source_mask, target_mask, dec_enc_mask
+
+    def create_non_pad_mask(self, sentence):
+        # padding token shouldn't be used for the output tensor
+        # to use only non padding token, create non-pad masking tensor
+        return sentence.ne(self.pad_idx).type(torch.float).unsqueeze(-1)
 
     def create_positional_encoding(self, batch_size, sentence_len):
         # PE(pos, 2i)     = sin(pos/10000 ** (2*i / hidden_dim)
@@ -85,12 +87,10 @@ class Transformer(nn.Module):
         sinusoid_table = sinusoid_table.reshape(sentence_len, -1)
         # sinusoid table = [sentence length, hidden dim]
 
-        # calculate positional encoding for even numbers
-        sinusoid_table[0::2, :] = np.sin(sinusoid_table[0::2, :])
-        # calculate positional encoding for odd numbers
-        sinusoid_table[1::2, :] = np.sin(sinusoid_table[1::2, :])
+        sinusoid_table[0::2, :] = np.sin(sinusoid_table[0::2, :])  # calculate pe for even numbers
+        sinusoid_table[1::2, :] = np.sin(sinusoid_table[1::2, :])  # calculate pe for odd numbers
 
-        # convert numpy based sinusoid to torch.tensor and repeat it 'batch size' times
+        # convert numpy based sinusoid table to torch.tensor and repeat it 'batch size' times
         sinusoid_table = torch.FloatTensor(sinusoid_table).to(self.device)
         sinusoid_table = sinusoid_table.unsqueeze(0).repeat(batch_size, 1, 1)
         # sinusoid table = [batch size, sentence length, hidden dim]
@@ -107,11 +107,16 @@ class Transformer(nn.Module):
         subsequent_mask = self.create_subsequent_mask(target)
         source_mask, target_mask, dec_enc_mask = self.create_mask(source, target, subsequent_mask)
 
+        # create non-pad masking tensor which will be used to extract non-padded tokens from output
+        source_non_pad = self.create_non_pad_mask(source)
+        target_non_pad = self.create_non_pad_mask(target)
+        # non_pad = [batch size, sentence length, 1]
+
         source_positional_encoding = self.create_positional_encoding(source_batch, source_len)
         target_positional_encoding = self.create_positional_encoding(target_batch, target_len)
 
-        source = self.encoder(source, source_mask, source_positional_encoding)
-        output = self.decoder(target, source, target_mask, dec_enc_mask, target_positional_encoding)
+        source = self.encoder(source, source_mask, source_positional_encoding, source_non_pad)
+        output = self.decoder(target, source, target_mask, dec_enc_mask, target_positional_encoding, target_non_pad)
         # output = [batch size, target length, output dim]
 
         return output
