@@ -51,6 +51,12 @@ class Transformer(nn.Module):
         target_mask = (target == self.params.pad_idx)
         # source mask    = [batch size, source length]
         # target mask    = [batch size, target length]
+        '''
+        if sentence is [2, 193, 9, 27, 10003, 1, 1, 1, 3]
+        and 2 denotes <sos>, 3 denotes <eos> and 1 denotes <pad>
+        
+        masking tensor will be [False, False, False, False, False, True, True, True, False]
+        '''
 
         # repeat source sentence masking tensor 'target sentence length' times: dec_enc_mask
         dec_enc_mask = source_mask.unsqueeze(1).repeat(1, target_length, 1)
