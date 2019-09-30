@@ -58,6 +58,7 @@ class Transformer(nn.Module):
         source_mask = source_mask.unsqueeze(1).repeat(1, source_length, 1)
         # repeat target sentence masking tensor 'target sentence length' times: target_mask
         target_mask = target_mask.unsqueeze(1).repeat(1, target_length, 1)
+
         # dec enc mask   = [batch size, target length, source length]
         # source mask    = [batch size, source length, source length]
         # target mask    = [batch size, target length, target length]
@@ -69,6 +70,8 @@ class Transformer(nn.Module):
         return source_mask, target_mask, dec_enc_mask
 
     def create_positional_encoding(self, batch_size, sentence_len):
+        # PE(pos, 2i)     = sin(pos/10000 ** (2*i / hidden_dim)
+        # PE(pos, 2i + 1) = cos(pos/10000 ** (2*i / hidden_dim)
         sinusoid_table = np.array([pos/np.power(10000, 2*i/self.hidden_dim)
                                    for pos in range(sentence_len) for i in range(self.hidden_dim)])
         # sinusoid table = [sentence length * hidden dim]
@@ -76,12 +79,13 @@ class Transformer(nn.Module):
         sinusoid_table = sinusoid_table.reshape(sentence_len, -1)
         # sinusoid table = [sentence length, hidden dim]
 
-        # get positional encoding for even numbers
+        # calculate positional encoding for even numbers
         sinusoid_table[0::2, :] = np.sin(sinusoid_table[0::2, :])
-        # get positional encoding for odd numbers
+        # calculate positional encoding for odd numbers
         sinusoid_table[1::2, :] = np.sin(sinusoid_table[1::2, :])
-        sinusoid_table = torch.FloatTensor(sinusoid_table).to(self.device)
 
+        # convert numpy based sinusoid to torch.tensor and repeat it 'batch size' times
+        sinusoid_table = torch.FloatTensor(sinusoid_table).to(self.device)
         sinusoid_table = sinusoid_table.unsqueeze(0).repeat(batch_size, 1, 1)
         # sinusoid table = [batch size, sentence length, hidden dim]
 

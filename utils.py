@@ -5,7 +5,6 @@ import pickle
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 import pandas as pd
 
 from torchtext import data as ttd

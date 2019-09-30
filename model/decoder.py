@@ -49,7 +49,6 @@ class Decoder(nn.Module):
 
         # target mask         = [batch size, target length, target length]
         # dec enc mask        = [batch size, target length, source length]
-
         # positional encoding = [batch size, target length, hidden dim]
 
         # print(f'[D] Before embedding: {target.shape}')
