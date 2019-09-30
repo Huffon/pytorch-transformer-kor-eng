@@ -14,9 +14,9 @@ class EncoderLayer(nn.Module):
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
     def forward(self, source, source_mask, source_non_pad):
-        # source      = [batch size, source length, hidden dim]
-        # source_mask = [batch size, source length, source length]
-        # source_non_pad      = [batch size, source length, 1]
+        # source          = [batch size, source length, hidden dim]
+        # source_mask     = [batch size, source length, source length]
+        # source_non_pad  = [batch size, source length, 1]
 
         # Apply 'Add & Normalize' using nn.LayerNorm on self attention and Position wise Feed Forward Network
         output = self.layer_norm(source + self.self_attention(source, source, source, source_mask))
@@ -41,8 +41,8 @@ class Encoder(nn.Module):
 
     def forward(self, source, source_mask, positional_encoding, source_non_pad):
         # source              = [batch size, source length]
-        # source mask         = [batch size, source length, source length]
-        # positional encoding = [batch size, source length, hidden dim]
+        # source_mask         = [batch size, source length, source length]
+        # positional_encoding = [batch size, source length, hidden dim]
         # source_non_pad      = [batch size, source length, 1]
 
         # define positional encoding which encodes token's positional information

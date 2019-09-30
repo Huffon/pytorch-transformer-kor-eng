@@ -19,7 +19,7 @@ class DecoderLayer(nn.Module):
         # encoder_output  = [batch size, source sentence length, hidden dim]
         # target_mask     = [batch size, target sentence length, target sentence length]
         # dec_enc_mask    = [batch size, target sentence length, source sentence length]
-        # target non pad  = [batch size, target length, 1]
+        # target_non_pad  = [batch size, target length, 1]
 
         # Apply 'Add & Normalize' self attention, Encoder's Self attention and Position wise Feed Forward Network
         output = self.layer_norm(target + self.self_attention(target, target, target, target_mask))
@@ -47,15 +47,15 @@ class Decoder(nn.Module):
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, target, source, target_mask, dec_enc_mask, positional_encoding, target_non_pad):
+    def forward(self, target, encoder_output, target_mask, dec_enc_mask, positional_encoding, target_non_pad):
         # target              = [batch size, target length]
-        # source              = [batch size, source length]
+        # encoder_output      = [batch size, source length, hidden dim]
 
-        # target mask         = [batch size, target length, target length]
-        # dec enc mask        = [batch size, target length, source length]
-        # positional encoding = [batch size, target length, hidden dim]
+        # target_mask         = [batch size, target length, target length]
+        # dec_enc_mask        = [batch size, target length, source length]
+        # positional_encoding = [batch size, target length, hidden dim]
 
-        # target non pad      = [batch size, target length, 1]
+        # target_non_pad      = [batch size, target length, 1]
 
         # print(f'[D] Before embedding: {target.shape}')
         embedded = self.token_embedding(target)
@@ -64,7 +64,7 @@ class Decoder(nn.Module):
         target = self.dropout(embedded + positional_encoding)
 
         for decoder_layer in self.decoder_layers:
-            target = decoder_layer(target, source, target_mask, dec_enc_mask, target_non_pad)
+            target = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
         # target = [batch size, target length, hidden dim]
         # print(f'[D] After decoding: {target.shape}')
         output = self.fc(target)
