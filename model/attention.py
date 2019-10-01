@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 class MultiHeadAttention(nn.Module):
@@ -59,7 +60,7 @@ class SelfAttention(nn.Module):
         # self_attention = [batch size, sentence length, sentence length]
 
         if mask is not None:
-            self_attention = self_attention.masked_fill(mask, -1e10)
+            self_attention = self_attention.masked_fill(mask, -np.inf)
 
         # normalize self attention score by applying soft max function on each row
         attention_score = self.dropout(F.softmax(self_attention, dim=-1))

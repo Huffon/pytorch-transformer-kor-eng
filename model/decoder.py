@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from model.attention import MultiHeadAttention
 from model.positionwise import PositionWiseFeedForward
+from model.ops import create_positional_encoding, create_non_pad_mask, create_subsequent_mask, create_target_mask
 
 
 class DecoderLayer(nn.Module):
@@ -39,36 +40,35 @@ class Decoder(nn.Module):
     def __init__(self, params):
         super(Decoder, self).__init__()
         self.device = params.device
+        self.hidden_dim = params.hidden_dim
 
-        self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim)
+        self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim, padding_idx=params.pad_idx)
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
 
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, target, encoder_output, target_mask, dec_enc_mask, positional_encoding, target_non_pad):
+    def forward(self, target, source, encoder_output):
         # target              = [batch size, target length]
+        # source              = [batch size, source length]
         # encoder_output      = [batch size, source length, hidden dim]
+        target_batch, target_len = target.size()
 
-        # target_mask         = [batch size, target length, target length]
-        # dec_enc_mask        = [batch size, target length, source length]
-        # positional_encoding = [batch size, target length, hidden dim]
+        subsequent_mask = create_subsequent_mask(target)
+        target_mask, dec_enc_mask = create_target_mask(source, target, subsequent_mask)
+        # target_mask  = [batch size, target length, target length]
+        # dec_enc_mask = [batch size, target length, source length]
+        target_non_pad = create_non_pad_mask(target)  # [batch size, target length, 1]
 
-        # target_non_pad      = [batch size, target length, 1]
-
-        # print(f'[D] Before embedding: {target.shape}')
         embedded = self.token_embedding(target)
-        # print(f'[D] Before embedding: {embedded.shape}')
-
+        positional_encoding = create_positional_encoding(target_batch, target_len, self.hidden_dim)
         target = self.dropout(embedded + positional_encoding)
 
         for decoder_layer in self.decoder_layers:
             target = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
         # target = [batch size, target length, hidden dim]
-        # print(f'[D] After decoding: {target.shape}')
+
         output = self.fc(target)
         # output = [batch size, target length, output dim]
-        # print(f'[D] After predicting: {output.shape}')
-        # print('------------------------------------------------------------')
         return output

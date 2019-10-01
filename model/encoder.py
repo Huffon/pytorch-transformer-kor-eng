@@ -3,13 +3,13 @@ import torch.nn as nn
 
 from model.attention import MultiHeadAttention
 from model.positionwise import PositionWiseFeedForward
+from model.ops import create_positional_encoding, create_non_pad_mask, create_source_mask
 
 
 class EncoderLayer(nn.Module):
     def __init__(self, params):
         super(EncoderLayer, self).__init__()
         self.layer_norm = nn.LayerNorm(params.hidden_dim)
-
         self.self_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
@@ -33,29 +33,26 @@ class Encoder(nn.Module):
     def __init__(self, params):
         super(Encoder, self).__init__()
         self.device = params.device
+        self.hidden_dim = params.hidden_dim
 
-        self.token_embedding = nn.Embedding(params.input_dim, params.hidden_dim)
+        self.token_embedding = nn.Embedding(params.input_dim, params.hidden_dim, padding_idx=params.pad_idx)
         self.encoder_layers = nn.ModuleList([EncoderLayer(params) for _ in range(params.n_layer)])
         self.dropout = nn.Dropout(params.dropout)
         self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
-    def forward(self, source, source_mask, positional_encoding, source_non_pad):
-        # source              = [batch size, source length]
-        # source_mask         = [batch size, source length, source length]
-        # positional_encoding = [batch size, source length, hidden dim]
-        # source_non_pad      = [batch size, source length, 1]
+    def forward(self, source):
+        # source = [batch size, source length]
+        source_batch, source_len = source.size()
 
-        # define positional encoding which encodes token's positional information
-        # print(f'[E] Before embedding: {source.shape}')
+        source_mask = create_source_mask(source)      # [batch size, source length, source length]
+        source_non_pad = create_non_pad_mask(source)  # [batch size, source length, 1]
+
         embedded = self.token_embedding(source)
-        # print(f'[E] After embedding: {embedded.shape}')
-
+        positional_encoding = create_positional_encoding(source_batch, source_len, self.hidden_dim)
         source = self.dropout(embedded + positional_encoding)
         # source = [batch size, source length, hidden dim]
 
         for encoder_layer in self.encoder_layers:
             source = encoder_layer(source, source_mask, source_non_pad)
         # source = [batch size, source length, hidden dim]
-        # print(f'[E] After encoding: {source.shape}')
-        # print('------------------------------------------------------------')
         return source

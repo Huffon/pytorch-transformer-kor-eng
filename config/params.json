@@ -16,5 +16,6 @@
     "feed_forward_dim": 1024,
     "n_layer": 6,
     "n_head": 8,
+    "max_len": 20,
     "dropout": 0.1
 }
