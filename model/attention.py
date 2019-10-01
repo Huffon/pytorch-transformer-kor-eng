@@ -8,11 +8,8 @@ class MultiHeadAttention(nn.Module):
     def __init__(self, params):
         super(MultiHeadAttention, self).__init__()
         assert params.hidden_dim % params.n_head == 0
-
         self.attentions = nn.ModuleList([SelfAttention(params) for _ in range(params.n_head)])
-
         self.o_w = nn.Linear(params.hidden_dim, params.hidden_dim)
-
         self.dropout = nn.Dropout(params.dropout)
 
     def forward(self, query, key, value, mask=None):
@@ -33,7 +30,6 @@ class MultiHeadAttention(nn.Module):
 class SelfAttention(nn.Module):
     def __init__(self, params):
         super(SelfAttention, self).__init__()
-
         self.device = params.device
         self.hidden_dim = params.hidden_dim
         self.attention_dim = params.hidden_dim // params.n_head
@@ -43,7 +39,6 @@ class SelfAttention(nn.Module):
         self.v_w = nn.Linear(self.hidden_dim, self.attention_dim)
 
         self.dropout = nn.Dropout(params.dropout)
-
         self.scale_factor = torch.sqrt(torch.FloatTensor([self.attention_dim])).to(self.device)
 
     def forward(self, query, key, value, mask=None):

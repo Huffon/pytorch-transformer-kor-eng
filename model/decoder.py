@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 from model.attention import MultiHeadAttention
@@ -10,7 +9,6 @@ class DecoderLayer(nn.Module):
     def __init__(self, params):
         super(DecoderLayer, self).__init__()
         self.layer_norm = nn.LayerNorm(params.hidden_dim)
-
         self.self_attention = MultiHeadAttention(params)
         self.encoder_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
@@ -49,9 +47,7 @@ class Decoder(nn.Module):
 
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
-
         self.dropout = nn.Dropout(params.dropout)
-        self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
     def forward(self, target, source, encoder_output):
         # target              = [batch size, target length]
@@ -60,11 +56,9 @@ class Decoder(nn.Module):
         target_mask, dec_enc_mask = create_target_mask(source, target)
         # target_mask / dec_enc_mask  = [batch size, target length, target/source length]
         target_non_pad = create_non_pad_mask(target)  # [batch size, target length, 1]
-
         target_pos = create_position_vector(target)  # [batch size, target length]
 
-        embedded = self.token_embedding(target)
-        target = self.dropout(embedded + self.pos_embedding(target_pos))
+        target = self.dropout(self.token_embedding(target) + self.pos_embedding(target_pos))
         # target = [batch size, target length, hidden dim]
 
         for decoder_layer in self.decoder_layers:

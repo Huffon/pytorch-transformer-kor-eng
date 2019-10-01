@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 from model.attention import MultiHeadAttention
@@ -40,19 +39,15 @@ class Encoder(nn.Module):
             create_positional_encoding(params.max_len+1, params.hidden_dim), freeze=True)
 
         self.encoder_layers = nn.ModuleList([EncoderLayer(params) for _ in range(params.n_layer)])
-
         self.dropout = nn.Dropout(params.dropout)
-        self.scale = torch.sqrt(torch.FloatTensor([params.hidden_dim])).to(self.device)
 
     def forward(self, source):
         # source = [batch size, source length]
         source_mask = create_source_mask(source)      # [batch size, source length, source length]
         source_non_pad = create_non_pad_mask(source)  # [batch size, source length, 1]
-
         source_pos = create_position_vector(source)  # [batch size, source length]
 
-        embedded = self.token_embedding(source)
-        source = self.dropout(embedded + self.pos_embedding(source_pos))
+        source = self.dropout(self.token_embedding(source) + self.pos_embedding(source_pos))
         # source = [batch size, source length, hidden dim]
 
         for encoder_layer in self.encoder_layers:

@@ -8,7 +8,6 @@ class PositionWiseFeedForward(nn.Module):
         # nn.Conv1d takes input whose size is (N, C): N is a batch size, C denotes a number of channels
         self.conv1 = nn.Conv1d(params.hidden_dim, params.feed_forward_dim, kernel_size=1)
         self.conv2 = nn.Conv1d(params.feed_forward_dim, params.hidden_dim, kernel_size=1)
-
         self.dropout = nn.Dropout(params.dropout)
 
     def forward(self, x):
@@ -18,10 +17,10 @@ class PositionWiseFeedForward(nn.Module):
         x = x.permute(0, 2, 1)
         # x = [batch size, hidden dim, sentence length]
 
-        output = self.dropout(F.relu(self.conv1(x)))
+        output = F.relu(self.conv1(x))
         # output = [batch size, feed forward dim, sentence length)
 
-        output = self.conv2(output)
+        output = self.dropout(self.conv2(output))
         # output = [batch size, hidden dim, sentence length)
 
         # permute again to restore output's original indices
