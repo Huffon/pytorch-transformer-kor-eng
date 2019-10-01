@@ -24,6 +24,7 @@ class DecoderLayer(nn.Module):
 
         # Apply 'Add & Normalize' self attention, Encoder's Self attention and Position wise Feed Forward Network
         output = self.layer_norm(target + self.self_attention(target, target, target, target_mask))
+        output = output * target_non_pad
 
         # In Decoder stack, query is the output from below layer and key & value are the output from the Encoder
         output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output, dec_enc_mask))
