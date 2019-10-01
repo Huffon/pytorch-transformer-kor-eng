@@ -16,10 +16,10 @@ class DecoderLayer(nn.Module):
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
     def forward(self, target, encoder_output, target_mask, dec_enc_mask, target_non_pad):
-        # target          = [batch size, target sentence length, hidden dim]
-        # encoder_output  = [batch size, source sentence length, hidden dim]
-        # target_mask     = [batch size, target sentence length, target sentence length]
-        # dec_enc_mask    = [batch size, target sentence length, source sentence length]
+        # target          = [batch size, target length, hidden dim]
+        # encoder_output  = [batch size, source length, hidden dim]
+        # target_mask     = [batch size, target length, target length]
+        # dec_enc_mask    = [batch size, target length, source length]
         # target_non_pad  = [batch size, target length, 1]
 
         # Apply 'Add & Normalize' self attention, Encoder's Self attention and Position wise Feed Forward Network
@@ -53,8 +53,6 @@ class Decoder(nn.Module):
         # target              = [batch size, target length]
         # source              = [batch size, source length]
         # encoder_output      = [batch size, source length, hidden dim]
-        target_batch, target_len = target.size()
-
         subsequent_mask = create_subsequent_mask(target)
         target_mask, dec_enc_mask = create_target_mask(source, target, subsequent_mask)
         # target_mask  = [batch size, target length, target length]
@@ -62,7 +60,7 @@ class Decoder(nn.Module):
         target_non_pad = create_non_pad_mask(target)  # [batch size, target length, 1]
 
         embedded = self.token_embedding(target)
-        positional_encoding = create_positional_encoding(target_batch, target_len, self.hidden_dim)
+        positional_encoding = create_positional_encoding(target, self.hidden_dim)
         target = self.dropout(embedded + positional_encoding)
 
         for decoder_layer in self.decoder_layers:

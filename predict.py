@@ -7,7 +7,6 @@ from soynlp.tokenizer import LTokenizer
 
 from utils import Params
 from model.transformer import Transformer
-from model.ops import create_target_mask, create_source_mask, create_subsequent_mask, create_non_pad_mask
 
 
 def clean_text(text):
@@ -53,7 +52,6 @@ def predict(config):
     target = torch.zeros(1, params.max_len).type_as(source.data)
 
     encoder_output = model.encoder(source)
-    print(encoder_output)
     next_symbol = eng.vocab.stoi['<sos>']
 
     for i in range(0, params.max_len):
@@ -67,7 +65,6 @@ def predict(config):
     # translation_tensor = [target length] filed with word indices
     target = model(source, target)
     target = torch.argmax(target.squeeze(0), -1)
-    print(target.shape)
     # target = target.squeeze(0).max(dim=-1, keepdim=False)
     translation = [eng.vocab.itos[token] for token in target][1:]
 

@@ -9,8 +9,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def create_subsequent_mask(target):
-    # target = [batch size, target length]
-    batch_size, target_length = target.size()
     '''
     if target length is 5 and diagonal is 1, this function returns
         [[0, 1, 1, 1, 1],
@@ -18,12 +16,16 @@ def create_subsequent_mask(target):
          [0, 0, 0, 1, 1],
          [0, 0, 0, 1, 1],
          [0, 0, 0, 0, 1]]
+    :param target: [batch size, target length]
+    :return:
     '''
+    batch_size, target_length = target.size()
+
     # torch.triu returns the upper triangular part of a matrix based on user defined diagonal
     subsequent_mask = torch.triu(torch.ones(target_length, target_length), diagonal=1).bool().to(device)
     # subsequent_mask = [target length, target length]
 
-    # repeat subsequent mask 'batch size' times to cover all data instances in the batch
+    # repeat subsequent_mask 'batch size' times to cover all data instances in the batch
     subsequent_mask = subsequent_mask.unsqueeze(0).repeat(batch_size, 1, 1)
     # subsequent_mask = [batch size, target length, target length]
 
@@ -63,7 +65,6 @@ def create_target_mask(source, target, subsequent_mask):
     '''
     target_length = target.shape[1]
 
-    # create boolean tensors which will be used to mask padding tokens of both source and target sentence
     source_mask = (source == pad_idx)
     target_mask = (target == pad_idx)
     # target_mask    = [batch size, target length]
@@ -71,9 +72,6 @@ def create_target_mask(source, target, subsequent_mask):
     # repeat sentence masking tensors 'sentence length' times
     dec_enc_mask = source_mask.unsqueeze(1).repeat(1, target_length, 1)
     target_mask = target_mask.unsqueeze(1).repeat(1, target_length, 1)
-
-    # dec_enc_mask   = [batch size, target length, source length]
-    # target_mask    = [batch size, target length, target length]
 
     # combine <pad> token masking tensor and subsequent masking tensor for decoder's self attention
     target_mask = target_mask | subsequent_mask
@@ -91,9 +89,11 @@ def create_non_pad_mask(sentence):
     return sentence.ne(pad_idx).type(torch.float).unsqueeze(-1)
 
 
-def create_positional_encoding(batch_size, sentence_len, hidden_dim):
+def create_positional_encoding(sentence, hidden_dim):
     # PE(pos, 2i)     = sin(pos/10000 ** (2*i / hidden_dim))
     # PE(pos, 2i + 1) = cos(pos/10000 ** (2*i / hidden_dim))
+    batch_size, sentence_len = sentence.size()
+
     sinusoid_table = np.array([pos / np.power(10000, 2 * i / hidden_dim)
                                for pos in range(sentence_len) for i in range(hidden_dim)])
     # sinusoid_table = [sentence length * hidden dim]

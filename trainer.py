@@ -32,17 +32,15 @@ class Trainer:
 
         self.optimizer = optim.Adam(self.model.parameters())
 
-        # CrossEntropyLoss calculates both the log-softmax as well as the negative log-likelihood
-        # when calculate the loss, padding token should be ignored because it's not related to the prediction
         self.criterion = nn.CrossEntropyLoss(ignore_index=self.params.pad_idx)
         self.criterion.to(self.params.device)
 
     def train(self):
-        print(f'The model has {self.model.count_parameters():,} trainable parameters')
-
         best_valid_loss = float('inf')
 
         print(self.model)
+
+        print(f'The model has {self.model.count_parameters():,} trainable parameters')
 
         for epoch in range(self.params.num_epoch):
             self.model.train()
@@ -58,8 +56,6 @@ class Trainer:
 
                 # target sentence consists of <sos> and following tokens (except the <eos> token)
                 output = self.model(source, target[:, :-1])
-
-                output_max = torch.argmax(output.squeeze(0), -1)
 
                 # ground truth sentence consists of tokens and <eos> token (except the <sos> token)
                 output = output.contiguous().view(-1, output.shape[-1])

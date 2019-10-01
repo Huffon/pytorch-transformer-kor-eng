@@ -42,13 +42,11 @@ class Encoder(nn.Module):
 
     def forward(self, source):
         # source = [batch size, source length]
-        source_batch, source_len = source.size()
-
         source_mask = create_source_mask(source)      # [batch size, source length, source length]
         source_non_pad = create_non_pad_mask(source)  # [batch size, source length, 1]
 
         embedded = self.token_embedding(source)
-        positional_encoding = create_positional_encoding(source_batch, source_len, self.hidden_dim)
+        positional_encoding = create_positional_encoding(source, self.hidden_dim)
         source = self.dropout(embedded + positional_encoding)
         # source = [batch size, source length, hidden dim]
 
