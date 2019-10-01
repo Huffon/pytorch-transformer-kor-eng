@@ -9,13 +9,13 @@
     "clip": 1,
 
     "lr": 1e-3,
-    "batch_size": 128,
-    "num_epoch": 10,
+    "batch_size": 64,
+    "num_epoch": 20,
 
     "hidden_dim": 256,
     "feed_forward_dim": 1024,
     "n_layer": 6,
     "n_head": 8,
-    "max_len": 20,
+    "max_len": 64,
     "dropout": 0.1
 }

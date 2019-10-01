@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from model.attention import MultiHeadAttention
 from model.positionwise import PositionWiseFeedForward
-from model.ops import create_positional_encoding, create_non_pad_mask, create_subsequent_mask, create_target_mask
+from model.ops import create_positional_encoding, create_non_pad_mask, create_target_mask, create_position_vector
 
 
 class DecoderLayer(nn.Module):
@@ -44,6 +44,9 @@ class Decoder(nn.Module):
         self.hidden_dim = params.hidden_dim
 
         self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim, padding_idx=params.pad_idx)
+        self.pos_embedding = nn.Embedding.from_pretrained(
+            create_positional_encoding(params.max_len+1, params.hidden_dim), freeze=True)
+
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
 
@@ -54,15 +57,15 @@ class Decoder(nn.Module):
         # target              = [batch size, target length]
         # source              = [batch size, source length]
         # encoder_output      = [batch size, source length, hidden dim]
-        subsequent_mask = create_subsequent_mask(target)
-        target_mask, dec_enc_mask = create_target_mask(source, target, subsequent_mask)
-        # target_mask  = [batch size, target length, target length]
-        # dec_enc_mask = [batch size, target length, source length]
+        target_mask, dec_enc_mask = create_target_mask(source, target)
+        # target_mask / dec_enc_mask  = [batch size, target length, target/source length]
         target_non_pad = create_non_pad_mask(target)  # [batch size, target length, 1]
 
+        target_pos = create_position_vector(target)  # [batch size, target length]
+
         embedded = self.token_embedding(target)
-        positional_encoding = create_positional_encoding(target, self.hidden_dim)
-        target = self.dropout(embedded + positional_encoding)
+        target = self.dropout(embedded + self.pos_embedding(target_pos))
+        # target = [batch size, target length, hidden dim]
 
         for decoder_layer in self.decoder_layers:
             target = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
