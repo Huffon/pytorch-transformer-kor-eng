@@ -51,6 +51,7 @@ class Decoder(nn.Module):
 
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
+        nn.init.xavier_normal_(self.fc.weight)
         self.dropout = nn.Dropout(params.dropout)
         self.layer_norm = nn.LayerNorm(params.hidden_dim)
 
