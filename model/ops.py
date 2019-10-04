@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import torch
+import torch.nn as nn
 
 pickle_eng = open('pickles/eng.pickle', 'rb')
 eng = pickle.load(pickle_eng)
@@ -9,7 +10,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 def create_subsequent_mask(target):
-    '''
+    """
     if target length is 5 and diagonal is 1, this function returns
         [[0, 1, 1, 1, 1],
          [0, 0, 1, 1, 1],
@@ -18,7 +19,7 @@ def create_subsequent_mask(target):
          [0, 0, 0, 0, 0]]
     :param target: [batch size, target length]
     :return:
-    '''
+    """
     batch_size, target_length = target.size()
 
     # torch.triu returns the upper triangular part of a matrix based on user defined diagonal
@@ -33,13 +34,13 @@ def create_subsequent_mask(target):
 
 
 def create_source_mask(source):
-    '''
+    """
     create masking tensor for encoder's self attention
     if sentence is [2, 193, 9, 27, 10003, 1, 1, 1, 3] and 2 denotes <sos>, 3 denotes <eos> and 1 denotes <pad>
     masking tensor will be [False, False, False, False, False, True, True, True, False]
     :param source: [batch size, source length]
     :return: source mask
-    '''
+    """
     source_length = source.shape[1]
 
     # create boolean tensors which will be used to mask padding tokens of both source and target sentence
@@ -54,14 +55,14 @@ def create_source_mask(source):
 
 
 def create_target_mask(source, target):
-    '''
+    """
     create masking tensor for decoder's self attention and decoder's attention on the output of encoder
     if sentence is [2, 193, 9, 27, 10003, 1, 1, 1, 3] and 2 denotes <sos>, 3 denotes <eos> and 1 denotes <pad>
     masking tensor will be [False, False, False, False, False, True, True, True, False]
     :param source: [batch size, source length]
     :param target: [batch size, target length]
     :return:
-    '''
+    """
     target_length = target.shape[1]
 
     subsequent_mask = create_subsequent_mask(target)
@@ -83,11 +84,11 @@ def create_target_mask(source, target):
 
 
 def create_non_pad_mask(sentence):
-    '''
+    """
     create non-pad masking tensor which will be used to extract non-padded tokens from output
     if sentence is [2, 193, 9, 27, 1, 1, 1, 3]
     this function returns [[1], [1], [1], [1], [0], [0], [0], [1]]
-    '''
+    """
     return sentence.ne(pad_idx).type(torch.float).unsqueeze(-1)
 
 
@@ -119,3 +120,9 @@ def create_positional_encoding(max_len, hidden_dim):
     sinusoid_table[0] = 0.
 
     return sinusoid_table
+
+
+def init_weight(layer):
+    nn.init.xavier_uniform_(layer.weight)
+    if layer.bias is not None:
+        nn.init.constant_(layer.bias, 0)

@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 from model.attention import MultiHeadAttention
@@ -8,7 +9,7 @@ from model.ops import create_positional_encoding, create_non_pad_mask, create_ta
 class DecoderLayer(nn.Module):
     def __init__(self, params):
         super(DecoderLayer, self).__init__()
-        self.layer_norm = nn.LayerNorm(params.hidden_dim)
+        self.layer_norm = nn.LayerNorm(params.hidden_dim, eps=1e-6)
         self.self_attention = MultiHeadAttention(params)
         self.encoder_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
@@ -41,19 +42,15 @@ class DecoderLayer(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, params):
         super(Decoder, self).__init__()
-        self.device = params.device
-        self.hidden_dim = params.hidden_dim
-
         self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim, padding_idx=params.pad_idx)
-        nn.init.xavier_normal_(self.token_embedding.weight)
+        nn.init.normal_(self.token_embedding.weight, mean=0, std=params.hidden_dim**-0.5)
+        self.embedding_scale = params.hidden_dim ** 0.5
         self.pos_embedding = nn.Embedding.from_pretrained(
             create_positional_encoding(params.max_len+1, params.hidden_dim), freeze=True)
 
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
-        self.fc = nn.Linear(params.hidden_dim, params.output_dim)
-        nn.init.xavier_normal_(self.fc.weight)
         self.dropout = nn.Dropout(params.dropout)
-        self.layer_norm = nn.LayerNorm(params.hidden_dim)
+        self.layer_norm = nn.LayerNorm(params.hidden_dim, eps=1e-6)
 
     def forward(self, target, source, encoder_output):
         # target              = [batch size, target length]
@@ -64,14 +61,15 @@ class Decoder(nn.Module):
         target_non_pad = create_non_pad_mask(target)  # [batch size, target length, 1]
         target_pos = create_position_vector(target)  # [batch size, target length]
 
-        target = self.dropout(self.token_embedding(target) + self.pos_embedding(target_pos))
+        target = self.token_embedding(target) * self.embedding_scale
+        target = self.dropout(target + self.pos_embedding(target_pos))
         # target = [batch size, target length, hidden dim]
 
         for decoder_layer in self.decoder_layers:
             target = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
         # target = [batch size, target length, hidden dim]
-        target = self.layer_norm(target)
 
-        output = self.fc(target)
+        target = self.layer_norm(target)
+        output = torch.matmul(target, self.token_embedding.weight.transpose(0, 1))
         # output = [batch size, target length, output dim]
         return output

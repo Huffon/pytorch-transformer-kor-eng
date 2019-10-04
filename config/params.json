@@ -1,6 +1,6 @@
 {
     "model": "transformer",
-    "save_model": "transformer_model.pt",
+    "save_model": "model.pt",
 
     "mode": "train",
     "optim": "Adam",
@@ -10,7 +10,7 @@
 
     "lr": 1e-3,
     "batch_size": 128,
-    "num_epoch": 20,
+    "num_epoch": 50,
 
     "hidden_dim": 256,
     "feed_forward_dim": 1024,

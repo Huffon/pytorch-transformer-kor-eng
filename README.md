@@ -10,7 +10,7 @@ I can't upload the used dataset since it requires an approval from AI Hub. You c
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
 It is really nice and easy to use, you should try if you want to handle Korean sentences :)
 
-Currently, the lowest valid and test losses are **3.787** and **3.792** respectively.
+Currently, the lowest valid and test losses are **3.401** and **3.792** respectively.
 
 <br/>
 

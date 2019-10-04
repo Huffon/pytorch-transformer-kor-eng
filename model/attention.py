@@ -3,16 +3,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+from model.ops import init_weight
+
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, params):
         super(MultiHeadAttention, self).__init__()
         assert params.hidden_dim % params.n_head == 0
         self.attentions = nn.ModuleList([SelfAttention(params) for _ in range(params.n_head)])
-
-        self.o_w = nn.Linear(params.hidden_dim, params.hidden_dim)
-        nn.init.xavier_normal_(self.o_w.weight)
-
+        self.o_w = nn.Linear(params.hidden_dim, params.hidden_dim, bias=False)
+        init_weight(self.o_w)
         self.dropout = nn.Dropout(params.dropout)
 
     def forward(self, query, key, value, mask=None):
@@ -33,19 +33,18 @@ class MultiHeadAttention(nn.Module):
 class SelfAttention(nn.Module):
     def __init__(self, params):
         super(SelfAttention, self).__init__()
-        self.device = params.device
         self.hidden_dim = params.hidden_dim
         self.attention_dim = params.hidden_dim // params.n_head
 
-        self.q_w = nn.Linear(self.hidden_dim, self.attention_dim)
-        self.k_w = nn.Linear(self.hidden_dim, self.attention_dim)
-        self.v_w = nn.Linear(self.hidden_dim, self.attention_dim)
-        nn.init.normal_(self.q_w.weight, mean=0, std=np.sqrt(2.0 / (self.hidden_dim + self.attention_dim)))
-        nn.init.normal_(self.k_w.weight, mean=0, std=np.sqrt(2.0 / (self.hidden_dim + self.attention_dim)))
-        nn.init.normal_(self.v_w.weight, mean=0, std=np.sqrt(2.0 / (self.hidden_dim + self.attention_dim)))
+        self.q_w = nn.Linear(self.hidden_dim, self.attention_dim, bias=False)
+        self.k_w = nn.Linear(self.hidden_dim, self.attention_dim, bias=False)
+        self.v_w = nn.Linear(self.hidden_dim, self.attention_dim, bias=False)
+        init_weight(self.q_w)
+        init_weight(self.k_w)
+        init_weight(self.v_w)
 
         self.dropout = nn.Dropout(params.dropout)
-        self.scale_factor = torch.sqrt(torch.FloatTensor([self.attention_dim])).to(self.device)
+        self.scale_factor = torch.sqrt(torch.FloatTensor([self.attention_dim])).to(params.device)
 
     def forward(self, query, key, value, mask=None):
         # query, key, value = [batch size, sentence length, hidden dim]
@@ -72,4 +71,4 @@ class SelfAttention(nn.Module):
         weighted_v = torch.bmm(norm_attention_score, v)
         # weighted_v = [batch size, sentence length, attention dim]
 
-        return weighted_v
+        return self.dropout(weighted_v)
