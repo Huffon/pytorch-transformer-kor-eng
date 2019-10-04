@@ -1,14 +1,14 @@
 ## Transformer PyTorch implementation
-This repository contains Transformer implementation used to **translate Korean sentence into English sentence**.
+This repository contains **Transformer** implementation used to **translate Korean sentence into English sentence**.
 
 I used translation dataset for NMT, but you can apply this model to any sequence to sequence (i.e. text generation) tasks such as text summarization, response generation, ..., etc.
 
 In this project, I specially used Korean-English translation corpus from [**AI Hub**](http://www.aihub.or.kr/) to apply torchtext into Korean dataset. 
 
-I can not upload the used dataset since it requires an approval from AI Hub. You can get an approval from AI Hub, if you request it to admins.
+I can't upload the used dataset since it requires an approval from AI Hub. You can get an approval from AI Hub, if you request it to admins.
 
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
-It is really nice and easy to use, you should try if you handle Korean sentences :)
+It is really nice and easy to use, you should try if you want to handle Korean sentences :)
 
 Currently, the lowest valid and test losses are **3.787** and **3.792** respectively.
 
@@ -50,9 +50,9 @@ torchtext==0.4.0
 ### Usage
 - Before training the model, you should train `soynlp tokenizer` on your training dataset and build vocabulary using following code. 
 - You can determine the size of vocabulary of Korean and English dataset. 
-- In general, Korean dataset creates the larger size vocabulary than English dataset. Therefore to make balance, you have to pick **proper** vocab size
+- In general, Korean dataset creates the larger size vocabulary than English dataset. Therefore to make balance, you have to choose **proper** vocab size
 - By running following code, you will get `tokenizer.pickle`, `kor.pickle` and `eng.pickle` which are used to train, 
-test the model and predict user's input sentence
+test the model and predict user's input sentence.
 
 ```
 python build_pickle.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_SIZE
@@ -81,6 +81,9 @@ python predict.py --model MODEL_NAME --input "YOUR_KOREAN_INPUT"
 <br/>
 
 ### References
+
+Basically, most of my codes are based on [original paper](https://arxiv.org/abs/1706.03762). But, I found that there is a difference between original paper and practical implementation in tensor2tensor framework. Then, I fixed some codes to follow practical framework and got better result. For following these change, you should check-out the last [reference article](https://tunz.kr/post/4?fbclid=IwAR3yBAYfq_yOBoAdY9si5yPZjX5wQwZQV0MKA5L_AZHjCgdZAb_HW1TrWbs).
+
 - [Transformer Official Implementation](https://github.com/tensorflow/models/tree/master/official/transformer)
 - [Jadore's PyTorch Implementation](https://github.com/jadore801120/attention-is-all-you-need-pytorch)
 - [Ben Trevett's Implementation](https://github.com/bentrevett/pytorch-seq2seq/blob/master/6%20-%20Attention%20is%20All%20You%20Need.ipynb)

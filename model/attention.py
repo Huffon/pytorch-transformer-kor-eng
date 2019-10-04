@@ -21,7 +21,7 @@ class MultiHeadAttention(nn.Module):
         weighted_vs = [attention(query, key, value, mask) for attention in self.attentions]
         # weighted_vs = [batch size, sentence length, attention dim] * num head
 
-        weighted_v = torch.cat(weighted_vs, dim=2)
+        weighted_v = torch.cat(weighted_vs, dim=-1)
         # weighted_v = [batch size, sentence length, hidden dim]
 
         output = self.dropout(self.o_w(weighted_v))
@@ -64,11 +64,12 @@ class SelfAttention(nn.Module):
             self_attention = self_attention.masked_fill(mask, -np.inf)
 
         # normalize self attention score by applying soft max function on each row
-        attention_score = self.dropout(F.softmax(self_attention, dim=-1))
+        attention_score = F.softmax(self_attention, dim=-1)
+        norm_attention_score = self.dropout(attention_score)
         # attention_score = [batch size, sentence length, sentence length]
 
         # compute "weighted" value matrix using self attention score and V matrix
-        weighted_v = torch.bmm(attention_score, v)
+        weighted_v = torch.bmm(norm_attention_score, v)
         # weighted_v = [batch size, sentence length, attention dim]
 
         return weighted_v
