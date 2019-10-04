@@ -10,7 +10,7 @@ I can not upload the used dataset since it requires an approval from AI Hub. You
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
 It is really nice and easy to use, you should try if you handle Korean sentences :)
 
-Currently, the lowest valid and test losses are **4.351** and **4.348** respectively.
+Currently, the lowest valid and test losses are **3.799** and **3.800** respectively.
 
 <br/>
 
@@ -84,3 +84,4 @@ python predict.py --model MODEL_NAME --input "YOUR_KOREAN_INPUT"
 - [Transformer Official Implementation](https://github.com/tensorflow/models/tree/master/official/transformer)
 - [Jadore's PyTorch Implementation](https://github.com/jadore801120/attention-is-all-you-need-pytorch)
 - [Ben Trevett's Implementation](https://github.com/bentrevett/pytorch-seq2seq/blob/master/6%20-%20Attention%20is%20All%20You%20Need.ipynb)
+- [Transformer Details Not Described in The Paper](https://tunz.kr/post/4?fbclid=IwAR3yBAYfq_yOBoAdY9si5yPZjX5wQwZQV0MKA5L_AZHjCgdZAb_HW1TrWbs)

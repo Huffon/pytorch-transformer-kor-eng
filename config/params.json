@@ -1,6 +1,6 @@
 {
     "model": "transformer",
-    "save_model": "model.pt",
+    "save_model": "transformer_model.pt",
 
     "mode": "train",
     "optim": "Adam",

@@ -10,6 +10,7 @@ class MultiHeadAttention(nn.Module):
         assert params.hidden_dim % params.n_head == 0
         self.attentions = nn.ModuleList([SelfAttention(params) for _ in range(params.n_head)])
         self.o_w = nn.Linear(params.hidden_dim, params.hidden_dim)
+        nn.init.xavier_normal_(self.o_w.weight)
         self.dropout = nn.Dropout(params.dropout)
 
     def forward(self, query, key, value, mask=None):

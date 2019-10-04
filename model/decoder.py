@@ -20,15 +20,18 @@ class DecoderLayer(nn.Module):
         # dec_enc_mask    = [batch size, target length, source length]
         # target_non_pad  = [batch size, target length, 1]
 
-        # Apply 'Add & Normalize' self attention, Encoder's Self attention and Position wise Feed Forward Network
-        output = self.layer_norm(target + self.self_attention(target, target, target, target_mask))
+        # Original Implementation: LayerNorm(x + SubLayer(x)) -> Updated Implementation: x + SubLayer(LayerNorm(x))
+        norm_target = self.layer_norm(target)
+        output = target + self.self_attention(norm_target, norm_target, norm_target, target_mask)
         output = output * target_non_pad
 
         # In Decoder stack, query is the output from below layer and key & value are the output from the Encoder
-        output = self.layer_norm(output + self.encoder_attention(output, encoder_output, encoder_output, dec_enc_mask))
+        norm_output = self.layer_norm(output)
+        output = output + self.encoder_attention(norm_output, encoder_output, encoder_output, dec_enc_mask)
         output = output * target_non_pad
 
-        output = self.layer_norm(output + self.position_wise_ffn(output))
+        norm_output = self.layer_norm(output)
+        output = output + self.position_wise_ffn(norm_output)
         output = output * target_non_pad
         # output = [batch size, target length, hidden dim]
 
@@ -42,12 +45,14 @@ class Decoder(nn.Module):
         self.hidden_dim = params.hidden_dim
 
         self.token_embedding = nn.Embedding(params.output_dim, params.hidden_dim, padding_idx=params.pad_idx)
+        nn.init.xavier_normal_(self.token_embedding.weight)
         self.pos_embedding = nn.Embedding.from_pretrained(
             create_positional_encoding(params.max_len+1, params.hidden_dim), freeze=True)
 
         self.decoder_layers = nn.ModuleList([DecoderLayer(params) for _ in range(params.n_layer)])
         self.fc = nn.Linear(params.hidden_dim, params.output_dim)
         self.dropout = nn.Dropout(params.dropout)
+        self.layer_norm = nn.LayerNorm(params.hidden_dim)
 
     def forward(self, target, source, encoder_output):
         # target              = [batch size, target length]
@@ -64,6 +69,7 @@ class Decoder(nn.Module):
         for decoder_layer in self.decoder_layers:
             target = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
         # target = [batch size, target length, hidden dim]
+        target = self.layer_norm(target)
 
         output = self.fc(target)
         # output = [batch size, target length, output dim]
