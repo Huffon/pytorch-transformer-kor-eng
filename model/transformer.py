@@ -13,9 +13,9 @@ class Transformer(nn.Module):
     def forward(self, source, target):
         # source = [batch size, source length]
         # target = [batch size, target length]
-        encoder_output = self.encoder(source)                  # [batch size, source length, hidden dim]
-        output = self.decoder(target, source, encoder_output)  # [batch size, target length, output dim]
-        return output
+        encoder_output = self.encoder(source)                            # [batch size, source length, hidden dim]
+        output, attn_map = self.decoder(target, source, encoder_output)  # [batch size, target length, output dim]
+        return output, attn_map
 
     def count_parameters(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)

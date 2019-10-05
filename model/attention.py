@@ -18,8 +18,10 @@ class MultiHeadAttention(nn.Module):
     def forward(self, query, key, value, mask=None):
         # query, key, value = [batch size, sentence length, hidden dim]
 
-        weighted_vs = [attention(query, key, value, mask) for attention in self.attentions]
-        # weighted_vs = [batch size, sentence length, attention dim] * num head
+        self_attentions = [attention(query, key, value, mask) for attention in self.attentions]
+        # self_attentions = [batch size, sentence length, attention dim] * num head
+        weighted_vs = [weighted_v[0] for weighted_v in self_attentions]
+        attentions = [weighted_v[1] for weighted_v in self_attentions]
 
         weighted_v = torch.cat(weighted_vs, dim=-1)
         # weighted_v = [batch size, sentence length, hidden dim]
@@ -27,7 +29,7 @@ class MultiHeadAttention(nn.Module):
         output = self.dropout(self.o_w(weighted_v))
         # output = [batch size, sentence length, hidden dim]
 
-        return output
+        return output, attentions
 
 
 class SelfAttention(nn.Module):
@@ -71,4 +73,4 @@ class SelfAttention(nn.Module):
         weighted_v = torch.bmm(norm_attention_score, v)
         # weighted_v = [batch size, sentence length, attention dim]
 
-        return self.dropout(weighted_v)
+        return self.dropout(weighted_v), attention_score

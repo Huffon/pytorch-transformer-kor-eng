@@ -4,7 +4,7 @@ import argparse
 import torch
 from soynlp.tokenizer import LTokenizer
 
-from utils import Params, clean_text
+from utils import Params, clean_text, display_attention
 from model.transformer import Transformer
 
 
@@ -41,7 +41,7 @@ def predict(config):
 
     for i in range(0, params.max_len):
         target[0][i] = next_symbol
-        decoder_output = model.decoder(target, source, encoder_output)  # [1, target length, output dim]
+        decoder_output, _ = model.decoder(target, source, encoder_output)  # [1, target length, output dim]
         prob = decoder_output.squeeze(0).max(dim=-1, keepdim=False)[1]
         next_word = prob.data[i]
         next_symbol = next_word.item()
@@ -50,15 +50,16 @@ def predict(config):
     target = target[0][:eos_idx].unsqueeze(0)
 
     # translation_tensor = [target length] filed with word indices
-    target = model(source, target)
+    target, attention_map = model(source, target)
     target = target.squeeze(0).max(dim=-1)[1]
 
-    translation = [eng.vocab.itos[token] for token in target]
-    translation = translation[:translation.index('<eos>')]
+    translated_token = [eng.vocab.itos[token] for token in target]
+    translation = translated_token[:translated_token.index('<eos>')]
     translation = ' '.join(translation)
 
     print(f'kor> {config.input}')
     print(f'eng> {translation.capitalize()}')
+    display_attention(tokenized, translated_token, attention_map[4].squeeze(0)[:-1])
 
 
 if __name__ == '__main__':

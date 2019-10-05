@@ -19,7 +19,7 @@ class EncoderLayer(nn.Module):
 
         # Original Implementation: LayerNorm(x + SubLayer(x)) -> Updated Implementation: x + SubLayer(LayerNorm(x))
         normalized_source = self.layer_norm(source)
-        output = source + self.self_attention(normalized_source, normalized_source, normalized_source, source_mask)
+        output = source + self.self_attention(normalized_source, normalized_source, normalized_source, source_mask)[0]
         output = output * source_non_pad
 
         normalized_output = self.layer_norm(output)

@@ -23,12 +23,13 @@ class DecoderLayer(nn.Module):
 
         # Original Implementation: LayerNorm(x + SubLayer(x)) -> Updated Implementation: x + SubLayer(LayerNorm(x))
         norm_target = self.layer_norm(target)
-        output = target + self.self_attention(norm_target, norm_target, norm_target, target_mask)
+        output = target + self.self_attention(norm_target, norm_target, norm_target, target_mask)[0]
         output = output * target_non_pad
 
         # In Decoder stack, query is the output from below layer and key & value are the output from the Encoder
         norm_output = self.layer_norm(output)
-        output = output + self.encoder_attention(norm_output, encoder_output, encoder_output, dec_enc_mask)
+        sub_layer, attn_map = self.encoder_attention(norm_output, encoder_output, encoder_output, dec_enc_mask)
+        output = output + sub_layer
         output = output * target_non_pad
 
         norm_output = self.layer_norm(output)
@@ -36,7 +37,7 @@ class DecoderLayer(nn.Module):
         output = output * target_non_pad
         # output = [batch size, target length, hidden dim]
 
-        return output
+        return output, attn_map
 
 
 class Decoder(nn.Module):
@@ -66,10 +67,10 @@ class Decoder(nn.Module):
         # target = [batch size, target length, hidden dim]
 
         for decoder_layer in self.decoder_layers:
-            target = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
+            target, attention_map = decoder_layer(target, encoder_output, target_mask, dec_enc_mask, target_non_pad)
         # target = [batch size, target length, hidden dim]
 
         target = self.layer_norm(target)
         output = torch.matmul(target, self.token_embedding.weight.transpose(0, 1))
         # output = [batch size, target length, output dim]
-        return output
+        return output, attention_map

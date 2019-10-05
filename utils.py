@@ -6,6 +6,9 @@ from pathlib import Path
 
 import torch
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import matplotlib.font_manager as fm
 
 from torchtext import data as ttd
 from torchtext.data import Example, Dataset
@@ -159,8 +162,36 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 
-def encode_position(length):
-    pass
+def display_attention(candidate, translation, attention):
+    """
+    displays the model's attention over the source sentence for each target token generated.
+    Args:
+        candidate: (list) tokenized source tokens
+        translation: (list) predicted target translation tokens
+        attention: a tensor containing attentions scores
+    Returns:
+    """
+    # attention = [target length, source length]
+
+    attention = attention.cpu().detach().numpy()
+    # attention = [target length, source length]
+
+    font_location = 'pickles/NanumSquareR.ttf'
+    fontprop = fm.FontProperties(fname=font_location)
+
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(111)
+
+    ax.matshow(attention, cmap='bone')
+    ax.tick_params(labelsize=15)
+    ax.set_xticklabels([''] + [t.lower() for t in candidate], rotation=45, fontproperties=fontprop)
+    ax.set_yticklabels([''] + translation, fontproperties=fontprop)
+
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+    plt.show()
+    plt.close()
 
 
 class Params:
