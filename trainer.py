@@ -93,7 +93,7 @@ class Trainer:
                 source = batch.kor
                 target = batch.eng
 
-                output = self.model(source, target[:, :-1])
+                output = self.model(source, target[:, :-1])[0]
 
                 output = output.contiguous().view(-1, output.shape[-1])
                 target = target[:, 1:].contiguous().view(-1)
@@ -114,7 +114,7 @@ class Trainer:
                 source = batch.kor
                 target = batch.eng
 
-                output = self.model(source, target[:, :-1])
+                output = self.model(source, target[:, :-1])[0]
 
                 output = output.contiguous().view(-1, output.shape[-1])
                 target = target[:, 1:].contiguous().view(-1)

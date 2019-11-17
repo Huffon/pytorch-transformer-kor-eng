@@ -17,5 +17,5 @@ class Transformer(nn.Module):
         output, attn_map = self.decoder(target, source, encoder_output)  # [batch size, target length, output dim]
         return output, attn_map
 
-    def count_parameters(self):
+    def count_params(self):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
