@@ -91,7 +91,7 @@ eng> I am going to meet my girlfriend tomorrow
 ```
 
 <p align="center">
-  <img width="600" height="600" src="img/result2.png">
+  <img width="400" height="600" src="img/result2.png">
 </p>
 
 ```
