@@ -5,8 +5,6 @@ I used translation dataset for NMT, but you can apply this model to any sequence
 
 In this project, I specially used Korean-English translation corpus from [**AI Hub**](http://www.aihub.or.kr/) to apply torchtext into Korean dataset. 
 
-I can't upload the used dataset since it requires an approval from AI Hub. You can get an approval from AI Hub, if you request it to admins.
-
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
 It is really nice and easy to use, you should try if you want to handle Korean sentences :)
 
@@ -15,9 +13,9 @@ Currently, the lowest valid and test losses are **3.253** and **3.250** respecti
 <br/>
 
 ### Overview
-- Number of train data: 75,000
-- Number of validation data: 10,000
-- Number of test data: 10,000
+- Number of train data: 92,000
+- Number of validation data: 11,500
+- Number of test data: 11,500
 ```
 Example: 
 {
@@ -29,9 +27,9 @@ Example:
 
 ### Requirements
 
-- Following libraries are fundamental to this repo. Since I used conda environment `requirements.txt` has much more dependent libraries. 
-- If you encounters any dependency problem, just use following command 
-    - `pip install -r requirements.txt`
+- Following libraries are fundamental to this repo.
+- You should install PyTorch via official [Installation guide](https://pytorch.org/get-started/locally/).
+- To use spaCy model which is used to tokenize english sentence, download English model by running `python -m spacy download en_core_web_sm`.
 
 ```
 en-core-web-sm==2.1.0
@@ -62,20 +60,20 @@ python build_pickle.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_S
 - For training, run `main.py` with train mode (which is default option)
 
 ```
-python main.py --model MODEL_NAME
+python main.py
 ```
 
 - For testing, run `main.py` with test mode
 
 ```
-python main.py --model MODEL_NAME --mode test
+python main.py --mode test
 ```
 
 - For predicting, run `predict.py` with your Korean input sentence. 
 - *Don't forget to wrap your input with double quotation mark !*
 
 ```
-python predict.py --model MODEL_NAME --input "YOUR_KOREAN_INPUT"
+python predict.py --input "YOUR_KOREAN_INPUT"
 ```
 
 <br/>

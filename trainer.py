@@ -36,15 +36,12 @@ class Trainer:
         self.criterion.to(self.params.device)
 
     def train(self):
-        best_valid_loss = float('inf')
-
         print(self.model)
-
         print(f'The model has {self.model.count_parameters():,} trainable parameters')
+        best_valid_loss = float('inf')
 
         for epoch in range(self.params.num_epoch):
             self.model.train()
-
             epoch_loss = 0
             start_time = time.time()
 
@@ -55,7 +52,7 @@ class Trainer:
                 target = batch.eng
 
                 # target sentence consists of <sos> and following tokens (except the <eos> token)
-                output = self.model(source, target[:, :-1])
+                output = self.model(source, target[:, :-1])[0]
 
                 # ground truth sentence consists of tokens and <eos> token (except the <sos> token)
                 output = output.contiguous().view(-1, output.shape[-1])
@@ -77,7 +74,6 @@ class Trainer:
             valid_loss = self.evaluate()
 
             end_time = time.time()
-
             epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
             if valid_loss < best_valid_loss:
@@ -89,9 +85,8 @@ class Trainer:
             print(f'\tVal. Loss: {valid_loss:.3f} | Val. PPL: {math.exp(valid_loss):7.3f}')
 
     def evaluate(self):
-        epoch_loss = 0
-
         self.model.eval()
+        epoch_loss = 0
 
         with torch.no_grad():
             for batch in self.valid_iter:
@@ -110,10 +105,9 @@ class Trainer:
         return epoch_loss / len(self.valid_iter)
 
     def inference(self):
-        epoch_loss = 0
-
         self.model.load_state_dict(torch.load(self.params.save_model))
         self.model.eval()
+        epoch_loss = 0
 
         with torch.no_grad():
             for batch in self.test_iter:

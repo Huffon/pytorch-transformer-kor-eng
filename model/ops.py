@@ -79,7 +79,6 @@ def create_target_mask(source, target):
     # combine <pad> token masking tensor and subsequent masking tensor for decoder's self attention
     target_mask = target_mask | subsequent_mask
     # target_mask = [batch size, target length, target length]
-
     return target_mask, dec_enc_mask
 
 
@@ -93,6 +92,12 @@ def create_non_pad_mask(sentence):
 
 
 def create_position_vector(sentence):
+    """
+    create position vector which contains positional information
+    0th position is used for pad index
+    :param sentence: [batch size, sentence length]
+    :return: [batch size, sentence length]
+    """
     # sentence = [batch size, sentence length]
     batch_size, _ = sentence.size()
     pos_vec = np.array([(pos+1) if word != pad_idx else 0

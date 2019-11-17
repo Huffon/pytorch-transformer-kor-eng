@@ -10,7 +10,8 @@ class MultiHeadAttention(nn.Module):
     def __init__(self, params):
         super(MultiHeadAttention, self).__init__()
         assert params.hidden_dim % params.n_head == 0
-        self.attentions = nn.ModuleList([SelfAttention(params) for _ in range(params.n_head)])
+        self.attentions = nn.ModuleList([SelfAttention(params)
+                                         for _ in range(params.n_head)])
         self.o_w = nn.Linear(params.hidden_dim, params.hidden_dim, bias=False)
         init_weight(self.o_w)
         self.dropout = nn.Dropout(params.dropout)

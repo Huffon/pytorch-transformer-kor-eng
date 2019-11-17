@@ -13,25 +13,25 @@ from soynlp.tokenizer import LTokenizer
 
 def build_tokenizer():
     """
-    Train soynlp tokenizer which will be used to tokenize Korean input sentence using whole corpus
-    Returns:
-
+    Train soynlp tokenizer which will be used to tokenize Korean input sentence
     """
     print(f'Now building soy-nlp tokenizer . . .')
 
     data_dir = Path().cwd() / 'data'
-    train_file = os.path.join(data_dir, 'train_soynlp.csv')
+    train_file = os.path.join(data_dir, 'corpus.csv')
 
     df = pd.read_csv(train_file, encoding='utf-8')
 
     # if encounters non-text row, we should skip it
-    kor_lines = [row.korean for _, row in df.iterrows() if type(row.korean) == str]
+    kor_lines = [row.korean
+                 for _, row in df.iterrows() if type(row.korean) == str]
 
     word_extractor = WordExtractor(min_frequency=5)
     word_extractor.train(kor_lines)
 
     word_scores = word_extractor.extract()
-    cohesion_scores = {word: score.cohesion_forward for word, score in word_scores.items()}
+    cohesion_scores = {word: score.cohesion_forward
+                       for word, score in word_scores.items()}
 
     with open('pickles/tokenizer.pickle', 'wb') as pickle_out:
         pickle.dump(cohesion_scores, pickle_out)
@@ -39,12 +39,9 @@ def build_tokenizer():
 
 def build_vocab(config):
     """
-    Build vocabulary used to convert input sentence into word indices using soynlp and spacy tokenizer
+    Build vocab used to convert input sentence into word indices using soynlp and spacy tokenizer
     Args:
         config: configuration containing various options
-
-    Returns:
-
     """
     pickle_tokenizer = open('pickles/tokenizer.pickle', 'rb')
     cohesion_scores = pickle.load(pickle_tokenizer)
@@ -88,7 +85,7 @@ def build_vocab(config):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Build pickles used to use model')
+    parser = argparse.ArgumentParser(description='Pickle Builder')
 
     parser.add_argument('--kor_vocab', type=int, default=55000)
     parser.add_argument('--eng_vocab', type=int, default=30000)

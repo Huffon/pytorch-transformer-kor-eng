@@ -5,7 +5,6 @@
 out
 gen
 
-data/
 venv
 
 __pycache__/
