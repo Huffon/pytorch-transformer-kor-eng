@@ -1,5 +1,5 @@
 ## Transformer PyTorch implementation
-This repository contains **Transformer** implementation used to **translate Korean sentence into English sentence**.
+This repository contains [**Transformer**](https://papers.nips.cc/paper/7181-attention-is-all-you-need.pdf) implementation used to **translate Korean sentence into English sentence**.
 
 I used translation dataset for NMT, but you can apply this model to any sequence to sequence (i.e. text generation) tasks such as text summarization, response generation, ..., etc.
 
@@ -29,7 +29,7 @@ Example:
 
 ### Requirements
 
-- Following libraries are fundamental to this repo.
+- Following libraries are fundamental to this repository.
 - You should install PyTorch via official [Installation guide](https://pytorch.org/get-started/locally/).
 - To use spaCy model which is used to tokenize english sentence, download English model by running `python -m spacy download en_core_web_sm`.
 
@@ -57,7 +57,6 @@ test the model and predict user's input sentence.
 ```
 python build_pickle.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_SIZE
 ```
-
 
 - For training, run `main.py` with train mode (which is default option)
 
@@ -91,7 +90,7 @@ eng> I am going to meet my girlfriend tomorrow
 ```
 
 <p align="center">
-  <img width="400" height="600" src="img/result2.png">
+  <img width="350" height="600" src="img/result2.png">
 </p>
 
 ```
