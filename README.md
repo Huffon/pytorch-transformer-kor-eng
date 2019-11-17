@@ -8,7 +8,9 @@ In this project, I specially used Korean-English translation corpus from [**AI H
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
 It is really nice and easy to use, you should try if you want to handle Korean sentences :)
 
-Currently, the lowest valid and test losses are **3.253** and **3.250** respectively.
+Currently, the lowest valid and test losses are **2.820** and **2.824** respectively (@ 6 epochs).
+
+**Trained model link**: https://drive.google.com/file/d/1jUMnsm0R7LWKlYNj1s-7n7ZWbWoCV2Fd/view?usp=sharing
 
 <br/>
 
@@ -76,6 +78,26 @@ python main.py --mode test
 python predict.py --input "YOUR_KOREAN_INPUT"
 ```
 
+<br/>
+
+### Example
+<p align="center">
+  <img width="600" height="600" src="img/result1.png">
+</p>
+
+```
+kor> 내일 여자친구를 만나러 가요
+eng> I am going to meet my girlfriend tomorrow
+```
+
+<p align="center">
+  <img width="600" height="600" src="img/result2.png">
+</p>
+
+```
+kor> 감기 조심하세요
+eng> Be careful not to catch a cold
+```
 <br/>
 
 ### References

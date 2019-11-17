@@ -4,10 +4,6 @@
 *.iml
 out
 gen
-
 venv
-
 __pycache__/
 models/__pycache__/
-
-*.pt
