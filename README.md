@@ -6,11 +6,9 @@ I used translation dataset for NMT, but you can apply this model to any sequence
 In this project, I specially used Korean-English translation corpus from [**AI Hub**](http://www.aihub.or.kr/) to apply torchtext into Korean dataset. 
 
 And I also used [**soynlp**](https://github.com/lovit/soynlp) library which is used to tokenize Korean sentence. 
-It is really nice and easy to use, you should try if you want to handle Korean sentences :)
+It is really nice and easy to use, you should try if you plan to handle Korean sentences :)
 
-Currently, the lowest valid and test losses are **2.820** and **2.824** respectively (@ 6 epochs).
-
-**Trained model link**: https://drive.google.com/file/d/1jUMnsm0R7LWKlYNj1s-7n7ZWbWoCV2Fd/view?usp=sharing
+Currently, the lowest valid and test losses are **2.047** and **3.488** respectively.
 
 <br/>
 
@@ -97,6 +95,11 @@ eng> I am going to meet my girlfriend tomorrow
 kor> 감기 조심하세요
 eng> Be careful not to catch a cold
 ```
+<br/>
+
+### To do
+- Add **Beam Search** for decoding step
+- Add **Label Smoothing** technique
 <br/>
 
 ### References

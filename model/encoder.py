@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from model.attention import MultiHeadAttention
 from model.positionwise import PositionWiseFeedForward
-from model.ops import create_positional_encoding, create_non_pad_mask, create_source_mask, create_position_vector
+from model.ops import create_positional_encoding, create_source_mask, create_position_vector
 
 
 class EncoderLayer(nn.Module):
@@ -12,19 +12,16 @@ class EncoderLayer(nn.Module):
         self.self_attention = MultiHeadAttention(params)
         self.position_wise_ffn = PositionWiseFeedForward(params)
 
-    def forward(self, source, source_mask, source_non_pad):
+    def forward(self, source, source_mask):
         # source          = [batch size, source length, hidden dim]
         # source_mask     = [batch size, source length, source length]
-        # source_non_pad  = [batch size, source length, 1]
 
         # Original Implementation: LayerNorm(x + SubLayer(x)) -> Updated Implementation: x + SubLayer(LayerNorm(x))
         normalized_source = self.layer_norm(source)
         output = source + self.self_attention(normalized_source, normalized_source, normalized_source, source_mask)[0]
-        output = output * source_non_pad
 
         normalized_output = self.layer_norm(output)
         output = output + self.position_wise_ffn(normalized_output)
-        output = output * source_non_pad
         # output = [batch size, source length, hidden dim]
 
         return output
@@ -46,7 +43,6 @@ class Encoder(nn.Module):
     def forward(self, source):
         # source = [batch size, source length]
         source_mask = create_source_mask(source)      # [batch size, source length, source length]
-        source_non_pad = create_non_pad_mask(source)  # [batch size, source length, 1]
         source_pos = create_position_vector(source)   # [batch size, source length]
 
         source = self.token_embedding(source) * self.embedding_scale
@@ -54,7 +50,7 @@ class Encoder(nn.Module):
         # source = [batch size, source length, hidden dim]
 
         for encoder_layer in self.encoder_layers:
-            source = encoder_layer(source, source_mask, source_non_pad)
+            source = encoder_layer(source, source_mask)
         # source = [batch size, source length, hidden dim]
 
         return self.layer_norm(source)

@@ -82,15 +82,6 @@ def create_target_mask(source, target):
     return target_mask, dec_enc_mask
 
 
-def create_non_pad_mask(sentence):
-    """
-    create non-pad masking tensor which will be used to extract non-padded tokens from output
-    if sentence is [2, 193, 9, 27, 1, 1, 1, 3]
-    this function returns [[1], [1], [1], [1], [0], [0], [0], [1]]
-    """
-    return sentence.ne(pad_idx).type(torch.float).unsqueeze(-1)
-
-
 def create_position_vector(sentence):
     """
     create position vector which contains positional information

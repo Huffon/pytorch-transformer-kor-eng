@@ -1,13 +1,13 @@
 import time
-import math
 import random
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from model.transformer import Transformer
 from utils import epoch_time
+from model.optim import ScheduledAdam
+from model.transformer import Transformer
 
 random.seed(32)
 torch.manual_seed(32)
@@ -30,7 +30,12 @@ class Trainer:
         self.model = Transformer(self.params)
         self.model.to(self.params.device)
 
-        self.optimizer = optim.Adam(self.model.parameters())
+        # Scheduling Optimzer
+        self.optimizer = ScheduledAdam(
+            optim.Adam(self.model.parameters(), betas=(0.9, 0.98), eps=1e-9),
+            hidden_dim=params.hidden_dim,
+            warm_steps=params.warm_steps
+        )
 
         self.criterion = nn.CrossEntropyLoss(ignore_index=self.params.pad_idx)
         self.criterion.to(self.params.device)
@@ -81,8 +86,7 @@ class Trainer:
                 torch.save(self.model.state_dict(), self.params.save_model)
 
             print(f'Epoch: {epoch+1:02} | Epoch Time: {epoch_mins}m {epoch_secs}s')
-            print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
-            print(f'\tVal. Loss: {valid_loss:.3f} | Val. PPL: {math.exp(valid_loss):7.3f}')
+            print(f'\tTrain Loss: {train_loss:.3f} | Val. Loss: {valid_loss:.3f}')
 
     def evaluate(self):
         self.model.eval()
@@ -124,4 +128,4 @@ class Trainer:
                 epoch_loss += loss.item()
 
         test_loss = epoch_loss / len(self.test_iter)
-        print(f'Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f}')
+        print(f'Test Loss: {test_loss:.3f}')
