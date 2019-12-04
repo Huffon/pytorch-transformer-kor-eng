@@ -99,7 +99,7 @@ eng> Be careful not to catch a cold
 
 ### To do
 - Add **Beam Search** for decoding step
-- Add **Label Smoothing** technique
+- Add **Label Smoothing** technique [#1](https://github.com/jadore801120/attention-is-all-you-need-pytorch/blob/master/train.py#L33), [#2](https://github.com/tunz/transformer-pytorch/blob/master/utils/utils.py#L8), [#3](https://3months.tistory.com/465)
 <br/>
 
 ### References
