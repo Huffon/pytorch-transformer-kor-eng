@@ -65,11 +65,11 @@ class Trainer:
                 # output = [(batch size * target length - 1), output dim]
                 # target = [(batch size * target length - 1)]
                 loss = self.criterion(output, target)
+                loss.backward()
 
                 # clip the gradients to prevent the model from exploding gradient
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.params.clip)
 
-                loss.backward()
                 self.optimizer.step()
 
                 # 'item' method is used to extract a scalar from a tensor which only contains a single value.
