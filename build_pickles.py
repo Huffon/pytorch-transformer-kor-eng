@@ -52,7 +52,7 @@ def build_vocab(config):
                     lower=True,
                     batch_first=True)
 
-    eng = ttd.Field(tokenize='spacy',
+    eng = ttd.Field(tokenize=tokenizer.tokenize,
                     init_token='<sos>',
                     eos_token='<eos>',
                     lower=True,
