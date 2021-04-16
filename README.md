@@ -53,7 +53,11 @@ torchtext==0.4.0
 test the model and predict user's input sentence.
 
 ```
-python build_pickle.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_SIZE
+python build_pickles.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_SIZE
+```
+```
+# in default vocab size
+python build_pickles.py
 ```
 
 - For training, run `main.py` with train mode (which is default option)
