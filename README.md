@@ -29,7 +29,7 @@ Example:
 
 - Following libraries are fundamental to this repository.
 - You should install PyTorch via official [Installation guide](https://pytorch.org/get-started/locally/).
-- To use spaCy model which is used to tokenize english sentence, download English model by running `python -m spacy download en_core_web_sm`. `python -m spacy download en` (open Cmd prompt as an Administrator mode)
+- To use spaCy model which is used to tokenize english sentence, download English model by running `python -m spacy download en_core_web_sm`.
 
 ```
 en-core-web-sm==2.1.0
@@ -42,7 +42,7 @@ spacy==2.1.8
 torch==1.2.0
 torchtext==0.4.0
 ```
-- if you have troble in installing torch and torchtext, do `pip install torch==1.2.0 -f https://download.pytorch.org/whl/torch_stable.html` and `pip install Torchtext==0.04`
+- If you have troble in installing `torch` and `torchtext`, do `pip install torch==1.2.0 -f https://download.pytorch.org/whl/torch_stable.html` and `pip install Torchtext==0.04`
 <br/>
 
 
