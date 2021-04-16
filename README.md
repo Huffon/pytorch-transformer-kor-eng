@@ -42,6 +42,7 @@ spacy==2.1.8
 torch==1.2.0
 torchtext==0.4.0
 ```
+- If you have troble in installing `torch` and `torchtext`, do `pip install torch==1.2.0 -f https://download.pytorch.org/whl/torch_stable.html` and `pip install Torchtext==0.04`
 <br/>
 
 
@@ -53,7 +54,11 @@ torchtext==0.4.0
 test the model and predict user's input sentence.
 
 ```
-python build_pickle.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_SIZE
+python build_pickles.py --kor_vocab KOREAN_VOCAB_SIZE --eng_vocab ENGLISH_VOCAB_SIZE
+```
+```
+# in default vocab size
+python build_pickles.py
 ```
 
 - For training, run `main.py` with train mode (which is default option)
